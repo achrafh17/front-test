@@ -1,0 +1,43 @@
+.top-bar {
+  height: 60px;
+  width: 100vw;
+  background-color: #2c2c2c;
+  padding: 10px 26px 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.top-bar svg{
+  width: 2rem;
+  height: 2rem;
+}
+
+.flex-1 {
+  flex: 1;
+  height: 100%;
+}
+
+.logo-container {
+  height: 100%;
+  width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-container img {
+  height: 100%;
+  max-height: 60px;
+}
+
+.company-info {
+  color: white;
+}
+
+.company-info p:nth-child(1) {
+  font-weight: bold;
+}
+.company-info p:nth-child(2) {
+  font-style: italic;
+}

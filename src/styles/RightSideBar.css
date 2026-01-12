@@ -1,0 +1,17 @@
+.right-sidebar {
+  width: 340px;
+  height: calc(100vh - 60px);
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: -2px 0px 14px 0px rgba(130, 137, 145, 0.3);
+  z-index: 100;
+}
+
+.arrow-after:hover::after {
+  content: "\21b5";
+  width: 100%;
+  margin-left: 5px;
+}

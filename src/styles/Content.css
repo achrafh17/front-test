@@ -1,0 +1,258 @@
+.upload-content {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  pointer-events: none;
+}
+
+.preview-content {
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e6ebf0;
+}
+
+
+
+.content-entity.active {
+  position: relative;
+}
+
+.content-entity.active::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  -webkit-box-shadow: 0px 3px 15px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 3px 15px 0px rgba(0, 0, 0, 0.3);
+}
+
+.content-shadow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  opacity: 0;
+  transition: opacity 0.5s, background-color 0.5s;
+}
+.content-entity:hover .content-shadow {
+  opacity: 0.5;
+}
+
+.content-options {
+  opacity: 0;
+  animation: show-content-options 0.5s ease forwards;
+}
+@keyframes show-content-options {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.content-selected {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #f00020;
+  opacity: 0.2;
+  top: 0;
+  left: 0;
+  
+  pointer-events: none;
+}
+
+@media screen and (max-width: 1129px) {
+  .content-entity:not(.size-1) {
+    width: calc(((100vw - 468px) / 3) - 24px);
+    height: calc((((100vw - 468px) / 3) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 3) - 24px) * 0.0679015);
+    min-width: 170px;
+    min-height: 162px;
+  }
+}
+
+@media screen and (min-width: 1130px) and (max-width: 1299px) {
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 4) - 24px);
+    height: calc((((100vw - 468px) / 4) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 4) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3 {
+    width: calc(((100vw - 468px) / 3) - 24px);
+    height: calc((((100vw - 468px) / 3) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 3) - 24px) * 0.0679015);
+  }
+}
+
+@media screen and (min-width: 1300px) and (max-width: 1399px) {
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 5) - 24px);
+    height: calc((((100vw - 468px) / 5) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 5) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3 {
+    width: calc(((100vw - 468px) / 4) - 24px);
+    height: calc((((100vw - 468px) / 4) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 4) - 24px) * 0.0679015);
+  }
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 3) - 24px);
+    height: calc((((100vw - 468px) / 3) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 3) - 24px) * 0.0679015);
+  }
+}
+@media screen and (min-width: 1400px) and (max-width: 1459px) {
+  /* show only 3 steps in slider */
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 5) - 24px);
+    height: calc((((100vw - 468px) / 5) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 5) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3,
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 4) - 24px);
+    height: calc((((100vw - 468px) / 4) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 4) - 24px) * 0.0679015);
+  }
+}
+@media screen and (min-width: 1460px) and (max-width: 1599px) {
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 6) - 24px);
+    height: calc((((100vw - 468px) / 6) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 6) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3 {
+    width: calc(((100vw - 468px) / 5) - 24px);
+    height: calc((((100vw - 468px) / 5) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 5) - 24px) * 0.0679015);
+  }
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 4) - 24px);
+    height: calc((((100vw - 468px) / 4) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 4) - 24px) * 0.0679015);
+  }
+}
+@media screen and (min-width: 1600px) and (max-width: 1719px) {
+  /* show only 3 steps in slider */
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 6) - 24px);
+    height: calc((((100vw - 468px) / 6) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 6) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3,
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 5) - 24px);
+    height: calc((((100vw - 468px) / 5) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 5) - 24px) * 0.0679015);
+  }
+}
+
+@media screen and (min-width: 1720px) and (max-width: 1829px) {
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 7) - 24px);
+    height: calc((((100vw - 468px) / 7) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 7) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3 {
+    width: calc(((100vw - 468px) / 6) - 24px);
+    height: calc((((100vw - 468px) / 6) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 6) - 24px) * 0.0679015);
+  }
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 5) - 24px);
+    height: calc((((100vw - 468px) / 5) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 5) - 24px) * 0.0679015);
+  }
+}
+@media screen and (min-width: 1830px) and (max-width: 1920px) {
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 8) - 24px);
+    height: calc((((100vw - 468px) / 8) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 8) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3 {
+    width: calc(((100vw - 468px) / 7) - 24px);
+    height: calc((((100vw - 468px) / 7) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 7) - 24px) * 0.0679015);
+  }
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 6) - 24px);
+    height: calc((((100vw - 468px) / 6) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 6) - 24px) * 0.0679015);
+  }
+  .content-entity.size-5 {
+    width: calc(((100vw - 468px) / 5) - 24px);
+    height: calc((((100vw - 468px) / 5) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 5) - 24px) * 0.0679015);
+  }
+}
+@media screen and (min-width: 1921px) and (max-width: 2069px) {
+  /* show only 4 steps in slider */
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 8) - 24px);
+    height: calc((((100vw - 468px) / 8) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 8) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3 {
+    width: calc(((100vw - 468px) / 7) - 24px);
+    height: calc((((100vw - 468px) / 7) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 7) - 24px) * 0.0679015);
+  }
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 6) - 24px);
+    height: calc((((100vw - 468px) / 6) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 6) - 24px) * 0.0679015);
+  }
+}
+
+@media screen and (min-width: 2070px) and (max-width: 2199px) {
+  /* show only 4 steps in slider */
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 9) - 24px);
+    height: calc((((100vw - 468px) / 9) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 9) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3 {
+    width: calc(((100vw - 468px) / 8) - 24px);
+    height: calc((((100vw - 468px) / 8) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 8) - 24px) * 0.0679015);
+  }
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 7) - 24px);
+    height: calc((((100vw - 468px) / 7) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 7) - 24px) * 0.0679015);
+  }
+}
+
+@media screen and (min-width: 2200px) {
+  .content-entity.size-2 {
+    width: calc(((100vw - 468px) / 10) - 24px);
+    height: calc((((100vw - 468px) / 10) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 10) - 24px) * 0.0679015);
+  }
+  .content-entity.size-3 {
+    width: calc(((100vw - 468px) / 9) - 24px);
+    height: calc((((100vw - 468px) / 9) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 9) - 24px) * 0.0679015);
+  }
+  .content-entity.size-4 {
+    width: calc(((100vw - 468px) / 8) - 24px);
+    height: calc((((100vw - 468px) / 8) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 8) - 24px) * 0.0679015);
+  }
+  .content-entity.size-5 {
+    width: calc(((100vw - 468px) / 7) - 24px);
+    height: calc((((100vw - 468px) / 7) - 24px) * 0.9516);
+    font-size: calc((((100vw - 468px) / 7) - 24px) * 0.0679015);
+  }
+}

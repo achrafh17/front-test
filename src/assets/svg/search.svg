@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6656.839 -220.025 28.161 28" fill="current" stroke="current">
+  <defs>
+    <style>
+      .cls-1 {
+        stroke-linecap: round;
+        stroke-miterlimit: 10;
+        stroke-width: 2px;
+      }
+    </style>
+  </defs>
+  <g id="Search_icon" transform="translate(6657.025 -220.025)">
+    <path id="Path_670" data-name="Path 670" class="cls-1" d="M10.691,19.795,4,26.488a1.749,1.749,0,0,1-2.5,0h0a1.749,1.749,0,0,1,0-2.5L11.09,14.4" transform="translate(0 -0.013)"/>
+    <ellipse id="Ellipse_165" data-name="Ellipse 165" class="cls-1" cx="8.692" cy="8.692" rx="8.692" ry="8.692" transform="translate(9.592 1)"/>
+    <path id="Path_671" data-name="Path 671" class="cls-1" d="M22,6a5.308,5.308,0,0,1,0,7.393" transform="translate(-0.02 -0.005)"/>
+  </g>
+</svg>

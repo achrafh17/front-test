@@ -1,0 +1,90 @@
+types: 
+    IDevicePlaylist : {
+        Playlist: IPlaylist & {
+        contents: (IContent2Playlist & {
+            content: IContent;
+        })[];
+        };
+        linkId: number;
+        sequence: number;
+        timeEnd: string;
+        timeStart: string;
+        layoutId: number | null;
+    }
+
+Main:
+    state:
+        + deviceInfo: IDevice
+        + searchTerm: string
+        + sliderValue: number
+        + showTimeline: boolean
+        + showContents: boolean
+        + refresh: boolean // whenever we change refresh (old => !old), we make a request to get device playlists to keep in sync with server
+
+    methods:
+        # onAddPlaylistBtnPress : () => void
+            # addPlaylists: (playlistId: number) => void 
+
+    view: 
+        ° Topbar (searchTerm, sliderValue, showTimeline, showContents,  onAddPlaylistBtnPress)
+        ° Titlebar (deviceInfo: IDevice)
+        ° PlaylistView(deviceInfo, showTimeline, showContents, refresh)
+
+
+Topbar: Dumb Component
+    view:
+        ° input for searchTerm
+        ° slider for sliderValue
+        ° icons for showContents & showTimeline
+        ° button from onAddPlaylistBtnPress
+
+Titlebar(deviceInfo: IDevice): DumbComponent
+    view:
+        ° map
+        ° icon for device
+        ° TitleBarName(deviceInfo) 
+        ° AddDevicesIcon(isGroup: deviceInfo.isGroup, groupId: deviceInfo.deviceId)
+        ° gear icon to show settings rsb
+
+TitleBarName(deviceInfo: IDevice)
+    view:
+        ° deviceInfo.parentId === null ? deviceInfo.name : deviceInfo.Parent.name > deviceInfo.name 
+        ° deviceInfo.isGroup ? "Groupe d'écrans" : "Écran"
+
+AddDevicesIcon(isGroup: boolean, groupId: number)
+    methods: 
+        #onAddDevices: (deviceIds: number[]) => void 
+    view:
+        ° isGroup? <addDeviceToGroupIcon onAddDevices={onAddDevices}/>:<></>
+
+
+
+PlaylistView(deviceInfo: IDevice, showTimeline: boolean, showContents: boolean, refresh: boolean)
+    state:
+        + playlists: IDevicePlaylist[]
+        + originalPlaylists: string
+
+            
+    lifecycle:
+        useEffect[refresh]: 
+            var id = deviceInfo.parentId === null ? deviceInfo.deviceId:deviceInfo.parentId
+            var newPlaylists = await getPlaylists(id);
+            setPlaylists(newPlaylists) 
+            setOriginalPlaylists(JSON.stringify(newPlaylists))
+
+
+    methods:
+        # getPlaylists : (deviceId: number) => IDevicePlaylist[]
+        # modifyPlaylist: (playlistIdx: number, {
+            timeEnd?: string;
+            timeStart?: string;
+            layoutId?: number | null;
+        }) => void
+            # takes a link id and updates state with given parameters (timeStart and/or timeEnd and/or layoutId)
+
+    view:
+        ° 
+    
+TBD :
+-> use open layers in map component
+-> DeviceReadOnlyRSB

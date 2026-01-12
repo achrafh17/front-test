@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="110" viewBox="0 0 250 110">
+    <defs>
+        <style>.ldrsb-1,.ldrsb-5,.ldrsb-6{fill:none;}.ldrsb-1{stroke:#F00020;}.ldrsb-1,.ldrsb-4,.ldrsb-5,.ldrsb-6{stroke-linecap:round;}.ldrsb-1,.ldrsb-3{stroke-miterlimit:10;}.ldrsb-2,.ldrsb-7{fill:#e6ebf0;}.ldrsb-3{fill:#d9dfe0;}.ldrsb-3,.ldrsb-7{stroke:#84898a;}.ldrsb-4{fill:#fff;}.ldrsb-4,.ldrsb-5{stroke:#80858a;}.ldrsb-4,.ldrsb-5,.ldrsb-6,.ldrsb-7{stroke-linejoin:round;}.ldrsb-6{stroke:#F00020;}</style>
+    </defs>
+    <title>ill_Layouts</title>
+    <g id="Layer_2" data-name="Layer 2">
+        <g id="Icons">
+            <line class="ldrsb-1" x1="26.5" y1="101.5" x2="26.5" y2="109.5" />
+            <line class="ldrsb-1" x1="22.5" y1="105.5" x2="30.5" y2="105.5" />
+            <line class="ldrsb-1" x1="6.5" y1="77.5" x2="6.5" y2="89.5" />
+            <line class="ldrsb-1" x1="0.5" y1="83.5" x2="12.5" y2="83.5" />
+            <circle class="ldrsb-2" cx="237" cy="13" r="13" />
+            <path class="ldrsb-2" d="M213,42H190a8,8,0,0,1,0-16h5a13,13,0,0,0,0-26H55a13,13,0,0,0,0,26h1a8,8,0,0,1,0,16H33A13,13,0,0,0,20,55h0A13,13,0,0,0,33,68H56a8,8,0,0,1,0,16H51a13,13,0,0,0,0,26H191a13,13,0,0,0,0-26h-1a8,8,0,0,1,0-16h23a13,13,0,0,0,13-13h0A13,13,0,0,0,213,42Z" />
+            <rect class="ldrsb-3" x="75.5" y="23.5" width="94" height="64" rx="1" ry="1" />
+            <rect class="ldrsb-4" x="80.5" y="28.5" width="84" height="46" />
+            <line class="ldrsb-5" x1="118.5" y1="81.5" x2="127.5" y2="81.52" />
+            <circle class="ldrsb-6" cx="133" cy="47" r="10" />
+            <path class="ldrsb-6" d="M137.83,46.67a.39.39,0,0,1,0,.66L130.52,52a.35.35,0,0,1-.52-.33V42.38a.35.35,0,0,1,.52-.33Z" />
+            <rect class="ldrsb-7" x="80.5" y="28.5" width="23" height="46" />
+            <rect class="ldrsb-7" x="103.5" y="64.5" width="61" height="10" />
+        </g>
+    </g>
+</svg>

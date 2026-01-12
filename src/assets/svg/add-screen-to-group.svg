@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25">
+    <g id="Layer_2" data-name="Layer 2">
+        <g id="Icons">
+            <path fill="current" d="M24,3H17a1,1,0,0,0,0,2h6V18H5V17a1,1,0,0,0-2,0v7a1,1,0,0,0,1,1H24a1,1,0,0,0,1-1V4A1,1,0,0,0,24,3ZM5,23V20H23v3Z" />
+            <path fill="current" d="M8,9V8H9A1,1,0,0,0,9,6H8V5A1,1,0,0,0,6,5V6H5A1,1,0,0,0,5,8H6V9A1,1,0,0,0,8,9Z" />
+            <path fill="current" d="M14,7a7,7,0,1,0-7,7A7,7,0,0,0,14,7ZM2,7a5,5,0,1,1,5,5A5,5,0,0,1,2,7Z" />
+        </g>
+    </g>
+</svg>

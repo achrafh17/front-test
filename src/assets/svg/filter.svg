@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ccc">
+    <g id="Icons">
+        <line style="stroke-linecap:round;stroke-linejoin:round;stroke-width:1.5px;" x1="23" y1="6" x2="8" y2="6"/>
+        <path style="stroke-linecap:round;stroke-linejoin:round;stroke-width:1.5px;" d="M22,1H2A1,1,0,0,0,1,2V6.55a1,1,0,0,0,.34.75L9,14v9l6-3V14l7.66-6.7A1,1,0,0,0,23,6.55V2A1,1,0,0,0,22,1Z"/>
+    </g>
+</svg>

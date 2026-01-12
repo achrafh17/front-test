@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-18259 -20009 60 45">
+    <g transform="translate(-19128 -20812)">
+        <g style="fill:none; stroke: #123; stroke-width:2px;" transform="translate(869 803)">
+            <rect style="stroke: none;" width="60" height="45" rx="3" />
+            <rect style="fill: none;" x="1" y="1" width="58" height="43" rx="2" />
+        </g>
+        <line style="fill:none; stroke: #123; stroke-width:2px;" x2="59" transform="translate(869.5 836.5)" />
+        <line style="fill:none; stroke: #123; stroke-width:2px;" y2="33" transform="translate(888.5 803.5)" />
+    </g>
+</svg>

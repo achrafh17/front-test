@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="250" height="110" viewBox="0 0 250 110">
+    <defs>
+        <style>
+            .device-default-sidebar-1,
+            .device-default-sidebar-5,
+            .device-default-sidebar-6,
+            .device-default-sidebar-7,
+            .device-default-sidebar-8 {
+                fill: none;
+            }
+
+            .device-default-sidebar-1 {
+                stroke: #F00020;
+            }
+
+            .device-default-sidebar-1,
+            .device-default-sidebar-4,
+            .device-default-sidebar-5,
+            .device-default-sidebar-6,
+            .device-default-sidebar-8 {
+                stroke-linecap: round;
+            }
+
+            .device-default-sidebar-1,
+            .device-default-sidebar-3 {
+                stroke-miterlimit: 10;
+            }
+
+            .device-default-sidebar-2 {
+                fill: #e6ebf0;
+            }
+
+            .device-default-sidebar-3 {
+                fill: #d9dfe0;
+                stroke: #84898a;
+            }
+
+            .device-default-sidebar-4 {
+                fill: #fff;
+            }
+
+            .device-default-sidebar-4,
+            .device-default-sidebar-5 {
+                stroke: #80858a;
+            }
+
+            .device-default-sidebar-4,
+            .device-default-sidebar-5,
+            .device-default-sidebar-6,
+            .device-default-sidebar-7,
+            .device-default-sidebar-8 {
+                stroke-linejoin: round;
+            }
+
+            .device-default-sidebar-6 {
+                stroke: #F00020;
+            }
+
+            .device-default-sidebar-7,
+            .device-default-sidebar-8 {
+                stroke: #F00020;
+            }
+        </style>
+    </defs>
+    <g id="Layer_2" data-name="Layer 2">
+        <g id="Icons">
+            <line class="device-default-sidebar-1" x1="26.5" y1="101.5" x2="26.5" y2="109.5" />
+            <line class="device-default-sidebar-1" x1="22.5" y1="105.5" x2="30.5" y2="105.5" />
+            <line class="device-default-sidebar-1" x1="6.5" y1="77.5" x2="6.5" y2="89.5" />
+            <line class="device-default-sidebar-1" x1="0.5" y1="83.5" x2="12.5" y2="83.5" />
+            <circle class="device-default-sidebar-2" cx="237" cy="13" r="13" />
+            <path class="device-default-sidebar-2"
+                d="M213,42H190a8,8,0,0,1,0-16h5a13,13,0,0,0,0-26H55a13,13,0,0,0,0,26h1a8,8,0,0,1,0,16H33A13,13,0,0,0,20,55h0A13,13,0,0,0,33,68H56a8,8,0,0,1,0,16H51a13,13,0,0,0,0,26H191a13,13,0,0,0,0-26h-1a8,8,0,0,1,0-16h23a13,13,0,0,0,13-13h0A13,13,0,0,0,213,42Z" />
+            <rect class="device-default-sidebar-3" x="75.5" y="23.5" width="94" height="64" rx="1" ry="1" />
+            <rect class="device-default-sidebar-4" x="80.5" y="28.5" width="84" height="46" />
+            <line class="device-default-sidebar-5" x1="118.5" y1="81.5" x2="127.5" y2="81.52" />
+            <path class="device-default-sidebar-6" d="M156.5,33.5h3a1,1,0,0,1,1,1v8" />
+            <line class="device-default-sidebar-6" x1="160.5" y1="46.5" x2="160.5" y2="49.5" />
+            <path class="device-default-sidebar-7"
+                d="M134,53.5l-2.15-1.23a9.24,9.24,0,0,0,0-3.53L134,47.5a1,1,0,0,0,.38-1.41l-2.08-3.57a1,1,0,0,0-1.42-.38l-2.11,1.21a9.48,9.48,0,0,0-3.24-1.86v-2a1,1,0,0,0-1-1h-4a1,1,0,0,0-1,1v2a9.48,9.48,0,0,0-3.24,1.86l-2.11-1.21a1,1,0,0,0-1.42.38l-2.08,3.57A1,1,0,0,0,111,47.5l2.15,1.23a9.24,9.24,0,0,0,0,3.53L111,53.5a1,1,0,0,0-.38,1.41l2.08,3.57a1.05,1.05,0,0,0,1.42.38l2.11-1.21a9.48,9.48,0,0,0,3.24,1.86v2a1,1,0,0,0,1,1h4a1,1,0,0,0,1-1v-2a9.48,9.48,0,0,0,3.24-1.86l2.12,1.21a1,1,0,0,0,1.42-.38l2.08-3.58A1,1,0,0,0,134,53.5Z" />
+            <path class="device-default-sidebar-8" d="M118.5,50.5a4,4,0,1,1,4,4" />
+        </g>
+    </g>
+</svg>

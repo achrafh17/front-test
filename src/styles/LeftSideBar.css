@@ -1,0 +1,58 @@
+.left-sidebar {
+  padding-top: 16px;
+  width: 80px;
+  height: calc(100vh - 60px);
+  background-color: #575b5c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+
+.avatar-container {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #d2cdcd;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  padding-top: 5px;
+}
+.avatar-container svg {
+  width: 50px;
+  height: 50px;
+}
+
+.signout {
+  color: #bec4c4;
+  font-size: .7rem;
+  cursor: pointer;
+}
+.signout:hover{
+  text-decoration: underline;
+}
+
+.navigation-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.navigation-btn svg{
+  width: 30px;
+  height: 30px;
+}
+
+.navigation-btn.selected{
+  background-color: #3f4242;
+  border-left: 4px solid red;
+}
+.navigation-btn.selected svg{
+  transform: translateX(-2px);
+}

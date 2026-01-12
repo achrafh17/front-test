@@ -1,0 +1,17 @@
+note :
+canvas event listener on object selection/deselection
+-> update activeObject in store
+-> subscribe to activeObject in layersTab and settingsTab
+
+
+tbd :
+    - update device Location each 15min
+    - user management
+    - review and change the way we calculate content and device stats
+    - add text and images in layers
+    - sorting and filtering in device, content, playlists
+
+
+- search by user
+    from:<user_handle>
+- search by hashtags
