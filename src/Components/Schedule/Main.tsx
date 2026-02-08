@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import React, { useCallback, useEffect, useState } from "react";
 import Slider from "@mui/material/Slider";
 import { styled } from "@mui/material/styles";
-import "../../styles/Content.css";
+// import "../../styles/Content.css";
 import ScheduleList from "./ScheduleList";
 import ScheduleDefaultRSB from "../RightSideBars/ScheduleDefaultRSB";
 import useSliderValue from "../../hooks/useSliderValue";
@@ -14,13 +14,14 @@ import useRSB from "../../hooks/useRSB";
 import useStore from "../../store/store";
 // @ts-ignore
 import CreateScheduleDialog from "./CreateScheduleDialog";
+import { Box, Grid } from "@mui/material";
 
 export interface ISchedule {
   scheduleId: number;
   title: string;
   startDate?: string;
   endDate?: string;
-  screens?: any[];
+  deviceId?: any[];
 }
 
 export default function Main() {
@@ -30,6 +31,8 @@ export default function Main() {
   const [editSchedule, setEditSchedule] = useState<ISchedule | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [schedule, setSchedule] = useState<ISchedule>();
+  const [playlists, setplaylists] = useState([]);
+  const [devices, setDevices] = useState([]);
 
   const setErrorMsg = useStore((state) => state.setErrorMsg);
   const [sliderMax, sliderValue, setSliderValue] = useSliderValue();
@@ -50,7 +53,29 @@ export default function Main() {
         if (json.success) setSchedules(json.result);
       })
       .catch(() => setIsLoading(false));
-  }, [userInfo?.sessionId]);
+  }, [userInfo?.sessionId, openCreate]);
+  //----------------------get Schedules------------------------------------
+  useEffect(() => {
+    fetch(
+      `https://www.powersmartscreen.com/get-playlists?sessionId=${userInfo?.sessionId}`,
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setplaylists(data.result);
+        console.log(data);
+      });
+  }, []);
+  //------------------------get Devices--------------------------------------
+  useEffect(() => {
+    fetch(
+      `https://www.powersmartscreen.com/get-devices?sessionId=${userInfo?.sessionId}`,
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setDevices(data.result);
+        console.log("get devices", data);
+      });
+  }, []);
 
   //-----------------------------------------------------------------------
   // Ajouter un nouveau
@@ -75,6 +100,16 @@ export default function Main() {
   //-----------------------------------------------------------------------
   const deleteSchedule = (id: number) => {
     setSchedules((prev) => prev.filter((s) => s.scheduleId !== id));
+    fetch(
+      `http://localhost:8000/delete-schedule?sessionId=${userInfo?.sessionId}`,
+      {
+        method: "DELETE",
+        headers: { "content-Type": "application/json" },
+        body: JSON.stringify({ scheduleId: id }),
+      },
+    )
+      .then((res) => res.json())
+      .then((data) => console.log(data));
   };
 
   //-----------------------------------------------------------------------
@@ -118,31 +153,42 @@ export default function Main() {
       </div>
 
       {/* Liste schedulers */}
-      <ScheduleList
-        schedules={schedules}
-        isLoading={isLoading}
-        sliderValue={sliderValue}
-        searchTerm={searchTerm}
-        onEdit={editExistingSchedule}
-        onDelete={deleteSchedule}
-      />
+      <Grid
+        sx={{
+          ml: 0,
+          overflowY: "scroll",
+          maxHeight: "calc(100vh - 80px -  (24px * 2) - 32px)",
+        }}
+        className="hide-scrollbar"
+      >
+        <ScheduleList
+          schedules={schedules}
+          isLoading={isLoading}
+          sliderValue={sliderValue}
+          searchTerm={searchTerm}
+          onEdit={editExistingSchedule}
+          onDelete={deleteSchedule}
+          devices={devices}
+        />
+      </Grid>
 
       {/* Modal création / modification */}
       <CreateScheduleDialog
+        playlists={playlists}
+        devices={devices}
         open={openCreate}
         onClose={() => setOpenCreate(false)}
         editSchedule={editSchedule}
         onSave={(schedule: ISchedule) => {
-          console.log("here is the schedule", schedule);
           setSchedule(schedule);
           if (editSchedule) {
             // 🟢 correction mise à jour
             setSchedules((prev) =>
               prev.map((s) =>
                 s.scheduleId === editSchedule.scheduleId
-                  ? { ...schedule, id: editSchedule.scheduleId }
-                  : s
-              )
+                  ? { ...schedule, scheduleId: editSchedule.scheduleId }
+                  : s,
+              ),
             );
           } else {
             setSchedules((prev) => [

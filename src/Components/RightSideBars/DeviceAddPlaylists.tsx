@@ -10,22 +10,24 @@ import EditTimelineDialog from "../EditTimelineDialog";
 import { IPlaylistInfo } from "../../types/api.types";
 
 interface props {
-  deviceId: number,
-  onSuccess: () => void,
+  deviceId: number;
+  onSuccess: () => void;
 }
 
-const DeviceAddPlaylist: React.FC<props> = ({
-  deviceId,
-  onSuccess
-}) => {
+const DeviceAddPlaylist: React.FC<props> = ({ deviceId, onSuccess }) => {
   var { userInfo } = useAuth();
   const [playlists, setPlaylists] = useState<IPlaylistInfo[]>([]);
   const [searchValue, setSearchValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [open, setOpen] = useState(false);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(
+    null,
+  );
 
-const fetchPlaylists = (sessionId: string) => {
-    fetch(`https://www.powersmartscreen.com/get-playlists?sessionId=${sessionId}`)
+  const fetchPlaylists = (sessionId: string) => {
+    fetch(
+      `https://www.powersmartscreen.com/get-playlists?sessionId=${sessionId}`,
+    )
       .then((res) => res.json())
       .then((resJson) => {
         setIsLoading(false);
@@ -40,17 +42,14 @@ const fetchPlaylists = (sessionId: string) => {
   };
 
   useEffect(() => {
-    if(userInfo?.sessionId){
+    if (userInfo?.sessionId) {
       fetchPlaylists(userInfo?.sessionId);
     }
   }, [userInfo?.sessionId]);
 
-  const [open, setOpen] = useState(false);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(null);
-
   const onTimelineSave = async (timeStart: string, timeEnd: string) => {
     var playlistInfo = playlists.find(
-      (p) => p.playlistId === selectedPlaylistId
+      (p) => p.playlistId === selectedPlaylistId,
     );
     if (playlistInfo !== undefined) {
       var payload = {
@@ -60,23 +59,26 @@ const fetchPlaylists = (sessionId: string) => {
         timeEnd,
         timeStart,
       };
-  
+
       try {
-        var res = await fetch("https://www.powersmartscreen.com/link-playlist-device", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
+        var res = await fetch(
+          "https://www.powersmartscreen.com/link-playlist-device",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify(payload),
           },
-          body: JSON.stringify(payload),
-        });
+        );
 
         var resJson = await res.json();
 
-        if(resJson.success){
+        if (resJson.success) {
           onSuccess();
         }
-      }catch(e){}
+      } catch (e) {}
     }
   };
 
@@ -150,7 +152,7 @@ const fetchPlaylists = (sessionId: string) => {
           </Box>
         ) : (
           playlists.map((p, idx) => {
-            if(!p.name.includes(searchValue)){
+            if (!p.name.includes(searchValue)) {
               return <div key={idx}></div>;
             }
             return (
@@ -198,7 +200,7 @@ const fetchPlaylists = (sessionId: string) => {
                   >
                     Durée totale:{" "}
                     {dayjs((p.totalDuration ?? 0) * 1000 || 0).format(
-                      "HH:mm:ss"
+                      "HH:mm:ss",
                     )}
                   </Typography>
                 </Box>
@@ -235,10 +237,15 @@ const fetchPlaylists = (sessionId: string) => {
         onClose={() => {
           setOpen(false);
         }}
+        addscheduleByPlaylistOrDevice={true}
         onSave={onTimelineSave}
+        title={""}
+        selectedDevice={deviceId}
+        playlistId={selectedPlaylistId}
+        editSchedule={null}
       />
     </Box>
   );
-}
+};
 
 export default DeviceAddPlaylist;

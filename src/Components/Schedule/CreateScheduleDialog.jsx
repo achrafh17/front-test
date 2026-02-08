@@ -29,64 +29,61 @@ const Divider = styled("div")({
   width: "100%",
 });
 
-const MOCK_PLAYLISTS = [
-  { id: 1, name: "Playlist 1" },
-  { id: 2, name: "Playlist 2" },
-  { id: 3, name: "Playlist 3" },
-];
-
-const MOCK_SCREENS = {
-  1: [
-    { id: 101, name: "Écran 1A" },
-    { id: 102, name: "Écran 1B" },
-  ],
-  2: [
-    { id: 201, name: "Écran 2A" },
-    { id: 202, name: "Écran 2B" },
-  ],
-  3: [
-    { id: 301, name: "Écran 3A" },
-    { id: 302, name: "Écran 3B" },
-  ],
-};
-
 export default function CreateScheduleDialog({
   open,
   onClose,
   editSchedule,
   onSave,
+  playlists,
+  devices,
 }) {
   const [title, setTitle] = useState(editSchedule?.title || "");
   const [playlist, setPlaylist] = useState(editSchedule?.playlistId || "");
-  const [screens, setScreens] = useState([]);
-  const [selected, setSelected] = useState(editSchedule?.screens || []);
+  const [selectedDevice, setSelectedDevice] = useState(
+    editSchedule?.deviceId || "",
+  );
   const [step, setStep] = useState(1);
   const [openTimeline, setTimeline] = useState(false);
 
-  useEffect(() => {
-    playlist ? setScreens(MOCK_SCREENS[playlist]) : setScreens([]);
-    setSelected([]); // reset sélection quand playlist change
-  }, [playlist]);
-
   const saveTimeline = (data) => {
     onSave({
-      id: editSchedule ? editSchedule.id : Date.now(),
+      scheduleId: editSchedule ? editSchedule.scheduleId : Date.now(),
       title,
       playlistId: playlist,
-      screens: selected,
+      deviceId: selectedDevice,
       ...data,
     });
-    onClose();
+    handleClose();
+  };
+  const handleClose = () => {
     setTitle("");
     setPlaylist("");
-    setSelected([]);
+    setSelectedDevice("");
+    setStep(1);
+    setTimeline(false);
+    onClose();
   };
+  useEffect(() => {
+    if (open) {
+      if (editSchedule) {
+        setTitle(editSchedule.title || "");
+        setPlaylist(editSchedule.playlistId || "");
+        setSelectedDevice(editSchedule.deviceId || "");
+      } else {
+        setTitle("");
+        setPlaylist("");
+        setSelectedDevice("");
+      }
+      setStep(1);
+      setTimeline(false);
+    }
+  }, [open, editSchedule]);
 
   return (
     <>
       <Dialog
         open={open && step === 1}
-        onClose={onClose}
+        onClose={handleClose}
         fullWidth
         maxWidth="sm"
       >
@@ -106,46 +103,46 @@ export default function CreateScheduleDialog({
           />
 
           <StyledFormControl fullWidth>
-            <InputLabel>Playlist</InputLabel>
+            <InputLabel id="playlist-label">Playlist</InputLabel>
             <Select
+              labelId="playlist-label"
               value={playlist}
+              label="Playlist"
               onChange={(e) => setPlaylist(e.target.value)}
             >
-              {MOCK_PLAYLISTS.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
+              {playlists.map((p) => (
+                <MenuItem key={p.playlistId} value={p.playlistId}>
                   {p.name}
                 </MenuItem>
               ))}
             </Select>
           </StyledFormControl>
 
-          <FormGroup>
-            {screens.map((s) => (
-              <FormControlLabel
-                key={s.id}
-                control={
-                  <Checkbox
-                    checked={selected.includes(s.id)}
-                    onChange={(e) =>
-                      e.target.checked
-                        ? setSelected((prev) => [...prev, s.id])
-                        : setSelected((prev) =>
-                            prev.filter((id) => id !== s.id)
-                          )
-                    }
-                  />
-                }
-                label={s.name}
-              />
-            ))}
-          </FormGroup>
+          {/* ------------------------------------------ */}
+          {playlist && devices.length > 0 && (
+            <StyledFormControl fullWidth>
+              <InputLabel id="device-label">Écrans</InputLabel>
+              <Select
+                labelId="device-label"
+                value={selectedDevice}
+                label="Écrans"
+                onChange={(e) => setSelectedDevice(e.target.value)}
+              >
+                {devices.map((d) => (
+                  <MenuItem key={d.deviceId} value={d.deviceId}>
+                    {d.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </StyledFormControl>
+          )}
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={onClose}>Annuler</Button>
+          <Button onClick={handleClose}>Annuler</Button>
           <Button
             variant="contained"
-            disabled={!title || !playlist || selected.length === 0}
+            disabled={!title || !playlist || !selectedDevice}
             onClick={() => {
               setStep(2);
               setTimeline(true);
@@ -163,6 +160,11 @@ export default function CreateScheduleDialog({
           setStep(1);
         }}
         onSave={saveTimeline}
+        addscheduleByPlaylistOrDevice={false}
+        title={title}
+        selectedDevice={selectedDevice}
+        playlistId={playlist}
+        editSchedule={editSchedule}
       />
     </>
   );

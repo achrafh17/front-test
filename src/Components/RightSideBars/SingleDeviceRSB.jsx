@@ -188,7 +188,7 @@ export default function SingleDeviceRSB({deviceInfo }) {
               as="p"
               sx={{ fontWeight: 400, fontSize: 16 }}
             >
-              Info
+              Info 
             </Typography>
             <Typography
               className="show-info"

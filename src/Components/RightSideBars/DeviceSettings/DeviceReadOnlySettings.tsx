@@ -159,7 +159,7 @@ const DeviceReadOnlySettings: React.FC<props> = ({
                 variant="body1"
                 sx={{ fontWeight: 400, fontSize: 16 }}
               >
-                Info
+                Info 
               </Typography>
               <Typography
                 className="show-info"

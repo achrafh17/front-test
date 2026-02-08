@@ -14,8 +14,8 @@ import { ReactComponent as LayoutsSvg } from "../assets/svg/layouts.svg";
 import { ReactComponent as LayoutsActiveSvg } from "../assets/svg/layouts-active.svg";
 
 // 🔥 nouveaux imports pour Schedule/Calendar
-import { ReactComponent as CalendarSvg } from "../assets/svg/calendar.svg";
-import { ReactComponent as CalendarActiveSvg } from "../assets/svg/calendar-active.svg";
+import { ReactComponent as CalendarSvg } from "../assets/svg/schedule-normal.svg";
+import { ReactComponent as CalendarActiveSvg } from "../assets/svg/schedule-hover.svg";
 
 import { Tooltip, Typography } from "@mui/material";
 import { Link, useLocation, useNavigate } from "react-router-dom";

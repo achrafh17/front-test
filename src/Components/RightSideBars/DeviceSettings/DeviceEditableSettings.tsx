@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { IDeviceSingle } from "../../../types/api.types";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -6,7 +6,7 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Slider from "@mui/material/Slider";
 import Tooltip from "@mui/material/Tooltip";
-import IOSSwitch from "../../Common/IOSSwitch"
+import IOSSwitch from "../../Common/IOSSwitch";
 import { Select } from "@mantine/core";
 import CircularProgress from "@mui/material/CircularProgress";
 //@ts-ignore
@@ -23,7 +23,8 @@ import dayjs from "dayjs";
 
 import timezones from "../../../assets/data/timezones.json";
 import useAuth from "../../../hooks/useAuth";
-
+import { ISchedule } from "../../Schedule/Main";
+import DeviceSchedulePanel from "./DeviceSchedulePanel";
 
 interface props {
   deviceInfo: IDeviceSingle;
@@ -41,25 +42,31 @@ const DeviceEditableSettings: React.FC<props> = ({
   const [hasChanged, setHasChanged] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [success, setSuccess] = React.useState<boolean | null>(null);
-
+  const [schedules, setSchedules] = useState<ISchedule[]>([]);
+  const [actualSchedule, setActualSchedule] = useState<ISchedule>();
+  const [nextSchedule, setNextSchedule] = useState<ISchedule>();
+  const [otherSchedules, setOtherSchedules] = useState<ISchedule[]>([]);
   const updateDeviceInfo = async () => {
     if (userInfo?.sessionId) {
       try {
-        var res = await fetch("https://www.powersmartscreen.com/update-device", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
+        var res = await fetch(
+          "https://www.powersmartscreen.com/update-device",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              sessionId: userInfo.sessionId,
+              deviceInfo: fields,
+            }),
           },
-          body: JSON.stringify({
-            sessionId: userInfo.sessionId,
-            deviceInfo: fields,
-          }),
-        });
+        );
 
         var resJson = await res.json();
         if (resJson.success) {
-          if(onNewDeviceInfo !== undefined){
+          if (onNewDeviceInfo !== undefined) {
             onNewDeviceInfo(resJson.result as IDeviceSingle);
           }
           return true;
@@ -71,8 +78,46 @@ const DeviceEditableSettings: React.FC<props> = ({
       }
     }
   };
+  useEffect(() => {
+    fetch(
+      `http://localhost:8000/get-schedules-by-device?sessionId=${userInfo?.sessionId}&deviceId=${deviceInfo.deviceId}`,
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        if (!data.success) {
+          setSchedules([]);
+          setActualSchedule(undefined);
+          setNextSchedule(undefined);
+          return;
+        }
 
+        setSchedules(data.schedules);
+        const now = new Date();
+        const actual = data.schedules?.find(
+          (s: ISchedule) =>
+            s.startDate &&
+            new Date(s?.startDate) <= now &&
+            s.endDate &&
+            new Date(s?.endDate) > now,
+        );
+        setActualSchedule(actual);
+        const next = data.schedules.find(
+          (s: ISchedule) => s.startDate && new Date(s.startDate) > now,
+        );
+        setNextSchedule(next);
 
+        const others = data.schedules.filter(
+          (s: ISchedule) =>
+            s.scheduleId !== actual?.scheduleId &&
+            s.scheduleId !== next?.scheduleId &&
+            s.endDate &&
+            new Date(s.endDate) > now,
+        );
+        setOtherSchedules(others);
+      });
+    return () => {};
+  }, [userInfo?.sessionId, deviceInfo?.deviceId]);
   const save = async () => {
     setIsLoading(true);
     var success = await updateDeviceInfo();
@@ -336,6 +381,12 @@ const DeviceEditableSettings: React.FC<props> = ({
             />
             <Typography sx={{ color: "#9ca0a1" }}>Mode Veille</Typography>
           </Box>
+          {/* -------------- Schedule information for device-------------------- */}
+          <DeviceSchedulePanel
+            actualSchedule={actualSchedule}
+            nextSchedule={nextSchedule}
+            otherSchedules={otherSchedules}
+          />
           {!!fields.sleepMode && (
             <Box
               sx={{

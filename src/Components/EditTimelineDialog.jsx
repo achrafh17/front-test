@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  TextField,
   Grid,
   Box,
   RadioGroup,
@@ -24,8 +25,10 @@ import RepeatIcon from "@mui/icons-material/Repeat";
 
 import { DatePicker, TimeInput } from "@mantine/dates";
 import { Text } from "@mantine/core";
-import useAuth from "../../hooks/useAuth";
-
+import useAuth from "../hooks/useAuth";
+import Alert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
+import Collapse from "@mui/material/Collapse";
 
 /* ---------------- LABEL ---------------- */
 const LabelWithIcon = ({ icon: Icon, text, required }) => (
@@ -56,7 +59,16 @@ const WEEK_DAYS = [
 ];
 
 /* ===================================================== */
-export default function EditTimelineDialog({ open, onClose, onSave }) {
+export default function EditTimelineDialog({
+  open,
+  onClose,
+  onSave,
+  title,
+  selectedDevice,
+  playlistId,
+  editSchedule,
+  addscheduleByPlaylistOrDevice,
+}) {
   /* ========== DEFAULT DATES ========== */
   const { userInfo } = useAuth();
 
@@ -83,6 +95,8 @@ export default function EditTimelineDialog({ open, onClose, onSave }) {
   const [repeatDays, setRepeatDays] = useState([]);
 
   const [error, setError] = useState("");
+  const [validation, setValidation] = useState("");
+  const [editTimeLineTitle, seteditTimeLineTitle] = useState("");
 
   /* ---------------- REPEAT AUTO LOGIC ---------------- */
   const autoFillRepeat = (type, date) => {
@@ -126,7 +140,9 @@ export default function EditTimelineDialog({ open, onClose, onSave }) {
 
   /* ---------------- VALIDATION + SUBMIT ---------------- */
   const handleSubmit = () => {
+    console.log("for the new feature here is the edit", editSchedule);
     setError("");
+    setValidation("");
 
     if (!startDate) return setError("Veuillez choisir une date de début.");
     if (startDate < today)
@@ -145,40 +161,131 @@ export default function EditTimelineDialog({ open, onClose, onSave }) {
       return setError("Heure fin < heure début.");
 
     const payload = {
-      playlistId: 1,
-      deviceId: null,
-      startDate: new Date(startDate.setHours(0, 0, 0, 0)).toISOString(),
+      title: addscheduleByPlaylistOrDevice ? editTimeLineTitle : title,
+      playlistId: playlistId,
+      deviceId: selectedDevice,
+      startDate: mergeDateAndTime(startDate, startTime).toISOString(),
       endDate:
-        eventType === "schedule"
-          ? new Date(endDate.setHours(0, 0, 0, 0)).toISOString()
-          : null,
-      startTime: mergeDateAndTime(startDate, startTime).toISOString(),
-      endTime:
         eventType === "schedule"
           ? mergeDateAndTime(endDate, endTime).toISOString()
           : null,
       priority: 1,
-      repeatType: repeatType === "none" ? null : repeatType,
+      repeatType: repeatType === "none" ? "none" : repeatType,
       repeatDays: repeatDays.length ? repeatDays.join(",") : null,
       isActive: true,
       createdAt: new Date().toISOString(),
       sessionId: userInfo?.sessionId,
+      scheduleId: editSchedule?.scheduleId ? editSchedule?.scheduleId : "",
     };
-    console.log("session id", userInfo);
-    fetch(`http://localhost:8000/add-schedule`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    onSave(payload);
-    onClose();
+    console.log("here is the payload", payload);
+    if (editSchedule !== null && editSchedule !== undefined) {
+      fetch(`http://localhost:8000/update-schedule`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (!data.success) {
+            setError(data.message);
+            setTimeout(() => {
+              setError("");
+            }, 3000);
+            return;
+          }
+          setValidation(data.message);
+          setTimeout(() => {
+            setValidation("");
+            onSave(payload);
+            seteditTimeLineTitle("");
+            onClose();
+          }, 3000);
+        });
+    } else {
+      console.log("here is the payload", payload);
+      fetch(`http://localhost:8000/add-schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          setError("");
+          if (!data.success) {
+            setError(data.message);
+            setTimeout(() => {
+              setError("");
+            }, 3000);
+            return;
+          }
+          setValidation(data.message);
+          setTimeout(() => {
+            setValidation("");
+            onSave(payload);
+            seteditTimeLineTitle("");
+            onClose();
+          }, 3000);
+        });
+    }
   };
+  useEffect(() => {
+    if (!open) {
+      setEventType("schedule");
+      setStartDate(today);
+      setEndDate(today);
+
+      const s = new Date();
+      s.setHours(8, 0, 0, 0);
+      setStartTime(s);
+
+      const e = new Date();
+      e.setHours(18, 0, 0, 0);
+      setEndTime(e);
+
+      setRepeatType("none");
+      setRepeatDays([]);
+      setError("");
+      setValidation("");
+    }
+  }, [open]);
 
   /* ===================== UI ===================== */
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       {/* HEADER */}
+      <Collapse in={Boolean(error)} timeout={300}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            mt: 2,
+            px: 2,
+          }}
+        >
+          <Alert
+            severity="error"
+            sx={{
+              width: "100%",
+              maxWidth: 420,
+              borderRadius: 2,
+            }}
+          >
+            <AlertTitle>Erreur</AlertTitle>
+            {error}
+          </Alert>
+        </Box>
+      </Collapse>
+
+      <Collapse in={Boolean(validation)} timeout={300}>
+        <Box sx={{ px: 2, mt: 1 }}>
+          <Alert severity="success">
+            <AlertTitle>Succès</AlertTitle>
+            {validation}
+          </Alert>
+        </Box>
+      </Collapse>
       <Box
         sx={{ display: "flex", justifyContent: "space-between", px: 3, pt: 2 }}
       >
@@ -188,6 +295,20 @@ export default function EditTimelineDialog({ open, onClose, onSave }) {
 
       {/* EVENT TYPE */}
       <Box sx={{ px: 3, pt: 1 }}>
+        {addscheduleByPlaylistOrDevice && (
+          <TextField
+            label="Titre"
+            fullWidth
+            value={editTimeLineTitle}
+            onChange={(e) => seteditTimeLineTitle(e.target.value)}
+            size="small"
+            sx={{
+              mt: 2,
+              mb: 2,
+            }}
+          />
+        )}
+
         <FormControl>
           <FormLabel>Type d'événement</FormLabel>
           <RadioGroup
@@ -294,9 +415,7 @@ export default function EditTimelineDialog({ open, onClose, onSave }) {
           >
             <MenuItem value="none">Aucune</MenuItem>
             <MenuItem value="daily">Quotidienne</MenuItem>
-            <MenuItem value="weekly">Hebdomadaire</MenuItem>
-            <MenuItem value="monthly">Mensuelle</MenuItem>
-            <MenuItem value="yearly">Annuelle</MenuItem>
+       
           </Select>
         </FormControl>
 
@@ -318,11 +437,6 @@ export default function EditTimelineDialog({ open, onClose, onSave }) {
         )}
         {repeatType === "daily" && <Text mt={2}>📌 Tous les jours</Text>}
 
-        {error && (
-          <Text color="red" mt={2}>
-            {error}
-          </Text>
-        )}
         <Text size="xs" color="dimmed" mt={1}>
           <span style={{ color: "red" }}>*</span> Obligatoire
         </Text>
