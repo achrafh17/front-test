@@ -4,6 +4,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
+import Slide from "@mui/material/Slide";
+import { forwardRef } from "react";
 
 interface Props {
   open: boolean;
@@ -11,13 +13,21 @@ interface Props {
   onClose: () => void;
   onConfirm: () => void;
 }
-
-const ConfirmDeleteDialog: React.FC<Props> = ({ open, title, onClose, onConfirm }) => {
+const Transition = forwardRef(function Transition(props: any, ref) {
+  return <Slide direction="up" ref={ref} {...props} timeout={250} />;
+});
+const ConfirmDeleteDialog: React.FC<Props> = ({
+  open,
+  title,
+  onClose,
+  onConfirm,
+}) => {
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} TransitionComponent={Transition}>
       <DialogTitle>Confirmer la suppression</DialogTitle>
       <DialogContent>
-        Êtes-vous sûr de vouloir supprimer le schedule <strong>{title}</strong> ?
+        Êtes-vous sûr de vouloir supprimer le schedule <strong>{title}</strong>{" "}
+        ?
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Annuler</Button>

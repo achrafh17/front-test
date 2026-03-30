@@ -59,7 +59,6 @@ export default function SignIn() {
 
   useEffect(() => {
     (async () => {
-      console.log("checking sessionId that was saved locally");
       var sessionId = localStorage.getItem("sessionId");
       if (sessionId) {
         //check if valid

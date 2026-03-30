@@ -86,7 +86,7 @@ export default function LeftSideBar() {
       </Tooltip>
 
      {/* 🆕 CALENDAR / SCHEDULE */}
-       <Tooltip title={<Typography fontSize={15}>Schedule</Typography>} placement="right" arrow>
+       <Tooltip title={<Typography fontSize={15}>Schedules</Typography>} placement="right" arrow>
         <Link className={`navigation-btn ${isPath("/schedule") ? "selected" : ""}`} to="/schedule">
           {isPath("/schedule") ? <CalendarActiveSvg /> : <CalendarSvg />}
         </Link>

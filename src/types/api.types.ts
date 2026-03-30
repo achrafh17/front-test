@@ -18,13 +18,13 @@ export interface IUser {
 }
 
 export interface IUserPrivileges {
-  privilegeId: number
-  userId: number
-  devices: boolean
-  playlists: boolean
-  contents: boolean
-  layers: boolean
-  stats: boolean
+  privilegeId: number;
+  userId: number;
+  devices: boolean;
+  playlists: boolean;
+  contents: boolean;
+  layers: boolean;
+  stats: boolean;
 }
 
 export interface IDevice {
@@ -56,6 +56,7 @@ export interface IDevice {
   parentId: number | null;
   token: string;
   userId: number | null;
+  children: IDevice[] | null;
 }
 
 export interface IPlaylist {
@@ -125,10 +126,7 @@ export interface ISlide {
 
 // ------------------- END OF PRISMA MODEL TYPES -------------------
 
-
-
 // ------------------- START OF BACKEND RESPONSE TYPES -------------------
-
 
 export type IUserInfo = IUser & {
   sessionId: string;
@@ -210,9 +208,9 @@ type tweetPost = {
   author_id: string;
   edit_history_tweet_ids: string[];
   attachments?: {
-    media_keys?: string[],
-  },
-}
+    media_keys?: string[];
+  };
+};
 
 type twitterUser = {
   id: string;
@@ -220,7 +218,7 @@ type twitterUser = {
   username: string;
   profile_image_url: string;
   verified: boolean;
-}
+};
 
 type twitterMedia = {
   height: number;
@@ -229,14 +227,14 @@ type twitterMedia = {
   media_key: string;
   url?: string;
   preview_image_url?: string;
-}
+};
 
 export interface ITwitterApiResponse {
   data: tweetPost[];
   includes: {
     users: twitterUser[];
     media?: twitterMedia[];
-  }
+  };
 }
 
 export interface IFormattedTwitterApiResponse {

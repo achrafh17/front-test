@@ -14,14 +14,16 @@ import useRSB from "../../hooks/useRSB";
 import useStore from "../../store/store";
 // @ts-ignore
 import CreateScheduleDialog from "./CreateScheduleDialog";
-import { Box, Grid } from "@mui/material";
-
+import { Grid } from "@mui/material";
+import { Select, MenuItem, FormControl } from "@mui/material";
+import { IDevice } from "../../types/api.types";
 export interface ISchedule {
   scheduleId: number;
   title: string;
   startDate?: string;
   endDate?: string;
-  deviceId?: any[];
+  devices?: IDevice[];
+  repeatType: string;
 }
 
 export default function Main() {
@@ -32,11 +34,23 @@ export default function Main() {
   const [isLoading, setIsLoading] = useState(false);
   const [schedule, setSchedule] = useState<ISchedule>();
   const [playlists, setplaylists] = useState([]);
-  const [devices, setDevices] = useState([]);
+  const [devices, setDevices] = useState<IDevice[]>([]);
 
   const setErrorMsg = useStore((state) => state.setErrorMsg);
   const [sliderMax, sliderValue, setSliderValue] = useSliderValue();
   const [searchTerm, setSearchTerm] = useState("");
+  //a variable to refresh the schedules list after deleted schedule
+  const [deleteTrigger, setdeleteTrigger] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<
+    "active" | "daily" | "passed"
+  >("active");
+  const [filterBy, setFilterBy] = useState<
+    | "name"
+    | "startDateAsc"
+    | "startDateDesc"
+    | "createdDateAsc"
+    | "createdDateDesc"
+  >("startDateAsc");
 
   const { setRsbVariant } = useRSB();
 
@@ -46,14 +60,16 @@ export default function Main() {
   useEffect(() => {
     if (!userInfo?.sessionId) return;
     setIsLoading(true);
-    fetch(`http://localhost:8000/get-schedules?sessionId=${userInfo.sessionId}`)
+    fetch(
+      `http://localhost:8000/get-schedules?sessionId=${userInfo.sessionId}&filterBy=${filterBy}`,
+    )
       .then((res) => res.json())
       .then((json) => {
         setIsLoading(false);
         if (json.success) setSchedules(json.result);
       })
       .catch(() => setIsLoading(false));
-  }, [userInfo?.sessionId, openCreate]);
+  }, [userInfo?.sessionId, openCreate, deleteTrigger, filterBy]);
   //----------------------get Schedules------------------------------------
   useEffect(() => {
     fetch(
@@ -72,7 +88,14 @@ export default function Main() {
     )
       .then((res) => res.json())
       .then((data) => {
-        setDevices(data.result);
+        //adding the devices inside groups
+        const group_Devices = data.result
+          .filter((d: IDevice) => d.isGroup)
+          .map((d: IDevice) => d.children)
+          .flat();
+        const allDevices = [...data.result, ...group_Devices];
+        setDevices(allDevices);
+
         console.log("get devices", data);
       });
   }, []);
@@ -91,6 +114,7 @@ export default function Main() {
   // Modifier un existant
   //-----------------------------------------------------------------------
   const editExistingSchedule = (schedule: ISchedule) => {
+    console.log("edit ", schedule);
     setEditSchedule(schedule);
     setOpenCreate(true);
   };
@@ -109,7 +133,10 @@ export default function Main() {
       },
     )
       .then((res) => res.json())
-      .then((data) => console.log(data));
+      .then((data) => {
+        console.log(data);
+        setdeleteTrigger((prev) => !prev);
+      });
   };
 
   //-----------------------------------------------------------------------
@@ -136,7 +163,18 @@ export default function Main() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <Select
+            value={statusFilter}
+            onChange={(e) =>
+              setStatusFilter(e.target.value as "active" | "daily" | "passed")
+            }
+          >
+            <MenuItem value="active">Actives</MenuItem>
+            <MenuItem value="daily">Quotidiennes</MenuItem>
+            <MenuItem value="passed">Terminées</MenuItem>
+          </Select>
+        </FormControl>
         <CustomSlider
           sx={{ width: 100, mx: 1 }}
           min={1}
@@ -152,7 +190,6 @@ export default function Main() {
         </Button>
       </div>
 
-      {/* Liste schedulers */}
       <Grid
         sx={{
           ml: 0,
@@ -169,6 +206,20 @@ export default function Main() {
           onEdit={editExistingSchedule}
           onDelete={deleteSchedule}
           devices={devices}
+          statusFilter={statusFilter}
+          filterBy={filterBy}
+          setFilterBy={(value: string) => {
+            const validValues = [
+              "name",
+              "startDateAsc",
+              "startDateDesc",
+              "createdDateAsc",
+              "createdDateDesc",
+            ] as const;
+            if (validValues.includes(value as any)) {
+              setFilterBy(value as (typeof validValues)[number]);
+            }
+          }}
         />
       </Grid>
 
@@ -182,7 +233,6 @@ export default function Main() {
         onSave={(schedule: ISchedule) => {
           setSchedule(schedule);
           if (editSchedule) {
-            // 🟢 correction mise à jour
             setSchedules((prev) =>
               prev.map((s) =>
                 s.scheduleId === editSchedule.scheduleId

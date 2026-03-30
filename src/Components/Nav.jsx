@@ -6,10 +6,14 @@ import { ReactComponent as UsersSvg } from "../assets/svg/users.svg";
 import useAuth from "../hooks/useAuth";
 import { Link, useLocation } from "react-router-dom";
 import Typography from "@mui/material/Typography";
+import { useEffect } from "react";
 
 export default function Nav() {
   const { userInfo } = useAuth();
   const location = useLocation();
+  let profileName = userInfo?.company ?? userInfo?.userName ?? "Company";
+
+
 
   return (
     <nav className="top-bar">
@@ -53,7 +57,9 @@ export default function Nav() {
 
       <AdjustmentsSvg />
       <div className="company-info">
-        <Typography className="company-name" sx={{maxWidth: 150}} noWrap>{ userInfo?.company ?? "Company"}</Typography>
+        <Typography className="company-name" sx={{ maxWidth: 150 }} noWrap>
+          {profileName}
+        </Typography>
         <p>Société</p>
       </div>
     </nav>

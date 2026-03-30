@@ -142,3 +142,6 @@ input[type=number]::-webkit-outer-spin-button {
   border-left-color:#f00020;
   border-left-width: 2px;
 }
+.mantine-DatePicker-dropdown {
+  z-index: 1400 !important;
+}

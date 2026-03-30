@@ -11,12 +11,18 @@ import {
   Select,
   MenuItem,
   Checkbox,
-  FormGroup,
-  FormControlLabel,
+  Typography,
+  Grid,
+  Paper,
+  Box,
+  IconButton,
 } from "@mui/material";
+import DvrIcon from "@mui/icons-material/Dvr";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import TvIcon from "@mui/icons-material/Tv";
 import { styled } from "@mui/material/styles";
-import EditTimelineDialog from "../EditTimelineDialog";
-
+import EditTimelineDialog from "./EditTimelineDialog";
 const StyledFormControl = styled(FormControl)({
   marginTop: 16,
   marginBottom: 16,
@@ -37,20 +43,150 @@ export default function CreateScheduleDialog({
   playlists,
   devices,
 }) {
+  const devicesExamples = [
+    {
+      deviceId: "dev-101",
+      name: "Écran Accueil",
+      location: "Entrée magasin",
+      status: "online",
+    },
+    {
+      deviceId: "dev-102",
+      name: "Écran Vitrine",
+      location: "Vitrine principale",
+      status: "online",
+    },
+    {
+      deviceId: "dev-103",
+      name: "Écran Caisse",
+      location: "Zone caisse",
+      status: "offline",
+    },
+    {
+      deviceId: "dev-104",
+      name: "Écran Restaurant",
+      location: "Salle principale",
+      status: "online",
+    },
+    {
+      deviceId: "dev-105",
+      name: "Écran Promotion",
+      location: "Rayon promotions",
+      status: "offline",
+    },
+    {
+      deviceId: "dev-106",
+      name: "Écran Étages",
+      location: "2ème étage",
+      status: "online",
+    },
+    {
+      deviceId: "dev-107",
+      name: "Écran Produits",
+      location: "Rayon produits",
+      status: "online",
+    },
+    {
+      deviceId: "dev-108",
+      name: "Écran Publicité",
+      location: "Entrée secondaire",
+      status: "online",
+    },
+    {
+      deviceId: "dev-109",
+      name: "Écran Menu",
+      location: "Zone restauration",
+      status: "offline",
+    },
+    {
+      deviceId: "dev-110",
+      name: "Écran Infos",
+      location: "Accueil clients",
+      status: "online",
+    },
+    {
+      deviceId: "dev-111",
+      name: "Écran Direction",
+      location: "Bureau direction",
+      status: "online",
+    },
+    {
+      deviceId: "dev-112",
+      name: "Écran Stock",
+      location: "Zone stockage",
+      status: "offline",
+    },
+    {
+      deviceId: "dev-113",
+      name: "Écran Couloir",
+      location: "Couloir principal",
+      status: "online",
+    },
+    {
+      deviceId: "dev-114",
+      name: "Écran Hall",
+      location: "Hall principal",
+      status: "online",
+    },
+    {
+      deviceId: "dev-115",
+      name: "Écran Parking",
+      location: "Entrée parking",
+      status: "offline",
+    },
+    {
+      deviceId: "dev-116",
+      name: "Écran Salle Réunion",
+      location: "Salle réunion",
+      status: "online",
+    },
+    {
+      deviceId: "dev-117",
+      name: "Écran Couloir Nord",
+      location: "Couloir nord",
+      status: "online",
+    },
+    {
+      deviceId: "dev-118",
+      name: "Écran Couloir Sud",
+      location: "Couloir sud",
+      status: "offline",
+    },
+    {
+      deviceId: "dev-119",
+      name: "Écran Couloir Sud",
+      location: "Couloir sud",
+      status: "offline",
+    },
+  ];
+
   const [title, setTitle] = useState(editSchedule?.title || "");
   const [playlist, setPlaylist] = useState(editSchedule?.playlistId || "");
-  const [selectedDevice, setSelectedDevice] = useState(
-    editSchedule?.deviceId || "",
-  );
+  const [selectedDevices, setSelectedDevices] = useState([]);
+  const [selectedGroupDevices, setSelectedGroupDevices] = useState([]);
   const [step, setStep] = useState(1);
   const [openTimeline, setTimeline] = useState(false);
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
+  const startPage = (page - 1) * ITEMS_PER_PAGE;
+  const endPage = startPage + ITEMS_PER_PAGE;
+  const totalPages = Math.max(
+    1,
+    Math.ceil((devices.length || 0) / ITEMS_PER_PAGE),
+  );
+  useEffect(() => {
+    console.log("here are the selected devices", selectedDevices);
+    console.log("group", selectedGroupDevices);
+    return () => {};
+  }, [selectedDevices, selectedGroupDevices]);
+  const devicesToShow = devices.slice(startPage, endPage);
 
   const saveTimeline = (data) => {
     onSave({
       scheduleId: editSchedule ? editSchedule.scheduleId : Date.now(),
       title,
       playlistId: playlist,
-      deviceId: selectedDevice,
+      deviceIds: selectedDevices,
       ...data,
     });
     handleClose();
@@ -58,21 +194,34 @@ export default function CreateScheduleDialog({
   const handleClose = () => {
     setTitle("");
     setPlaylist("");
-    setSelectedDevice("");
+    setSelectedDevices([]);
+    setSelectedGroupDevices([]);
     setStep(1);
     setTimeline(false);
+    setPage(1);
     onClose();
   };
   useEffect(() => {
     if (open) {
       if (editSchedule) {
+        console.log(editSchedule);
         setTitle(editSchedule.title || "");
         setPlaylist(editSchedule.playlistId || "");
-        setSelectedDevice(editSchedule.deviceId || "");
+        setSelectedDevices(
+          editSchedule.devices
+            .filter((device) => !device.isGroup)
+            .map((device) => device.deviceId),
+        );
+        setSelectedGroupDevices(
+          editSchedule.devices
+            .filter((device) => device.isGroup)
+            .map((device) => device.deviceId),
+        );
       } else {
         setTitle("");
         setPlaylist("");
-        setSelectedDevice("");
+        setSelectedDevices([]);
+        setSelectedGroupDevices([]);
       }
       setStep(1);
       setTimeline(false);
@@ -96,7 +245,8 @@ export default function CreateScheduleDialog({
 
         <DialogContent>
           <TextField
-            label="Titre"
+            label="Titre du calendrier"
+            placeholder="Ex: Playlist matin magasin"
             fullWidth
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -117,32 +267,194 @@ export default function CreateScheduleDialog({
               ))}
             </Select>
           </StyledFormControl>
-
-          {/* ------------------------------------------ */}
-          {playlist && devices.length > 0 && (
-            <StyledFormControl fullWidth>
-              <InputLabel id="device-label">Écrans</InputLabel>
-              <Select
-                labelId="device-label"
-                value={selectedDevice}
-                label="Écrans"
-                onChange={(e) => setSelectedDevice(e.target.value)}
+          <Box
+            sx={{
+              mt: 2,
+              p: 2,
+              gap: 10,
+              borderRadius: 2,
+              backgroundColor: "#fafafa",
+              border: "1px solid",
+              borderColor: "divider",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+            }}
+          >
+            {/* Header */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 1,
+              }}
+            >
+              <Typography fontSize={14} fontWeight={600}>
+                Écrans
+              </Typography>
+              <Button
+                size="small"
+                variant="text"
+                sx={{ textTransform: "none", fontSize: 12 }}
+                onClick={() => {
+                  const allDevices = devices
+                    .filter((d) => !d.isGroup)
+                    .map((d) => d.deviceId);
+                  const allGroups = devices
+                    .filter((d) => d.isGroup)
+                    .map((d) => d.deviceId);
+                  setSelectedDevices(allDevices);
+                  setSelectedGroupDevices(allGroups);
+                }}
               >
-                {devices.map((d) => (
-                  <MenuItem key={d.deviceId} value={d.deviceId}>
-                    {d.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </StyledFormControl>
-          )}
+                Tout sélectionner
+              </Button>
+
+              <Button
+                size="small"
+                variant="text"
+                color="inherit"
+                sx={{ textTransform: "none", fontSize: 12 }}
+                onClick={() => {
+                  setSelectedDevices([]);
+                  setSelectedGroupDevices([]);
+                }}
+              >
+                Tout désélectionner
+              </Button>
+              <Typography variant="caption" color="text.secondary">
+                {selectedDevices?.length + selectedGroupDevices.length}{" "}
+                sélectionné(s)
+              </Typography>
+            </Box>
+
+            {/* Grid */}
+            <Grid container spacing={1.5}>
+              {devicesToShow.map((d) => {
+                const selected = d.isGroup
+                  ? selectedGroupDevices.includes(d.deviceId)
+                  : selectedDevices.includes(d.deviceId);
+
+                return (
+                  <Grid item xs={12} sm={6} key={d.deviceId}>
+                    <Paper
+                      onClick={() => {
+                        if (d.isGroup) {
+                          setSelectedGroupDevices((prev) =>
+                            prev.includes(d.deviceId)
+                              ? prev.filter((id) => id !== d.deviceId)
+                              : [...prev, d.deviceId],
+                          );
+                        } else {
+                          setSelectedDevices((prev) =>
+                            prev.includes(d.deviceId)
+                              ? prev.filter((id) => id !== d.deviceId)
+                              : [...prev, d.deviceId],
+                          );
+                        }
+                      }}
+                      sx={{
+                        px: 2,
+                        py: 1.4,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        borderRadius: 3,
+
+                        border: selected
+                          ? d.isGroup
+                            ? "1.5px solid #7b1fa2"
+                            : "1.5px solid #1976d2"
+                          : "1px solid #e5e7eb",
+
+                        backgroundColor: selected
+                          ? d.isGroup
+                            ? "#f6f0ff"
+                            : "#f3f8ff"
+                          : "#ffffff",
+
+                        boxShadow: selected
+                          ? "0 4px 12px rgba(0,0,0,0.05)"
+                          : "0 1px 2px rgba(0,0,0,0.04)",
+
+                        transition: "all 0.2s ease",
+
+                        "&:hover": {
+                          transform: "translateY(-2px)",
+                          boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+                          borderColor: d.isGroup ? "#7b1fa2" : "#1976d2",
+                        },
+                      }}
+                    >
+                      <Box display="flex" alignItems="center" gap={1.2}>
+                       
+                          <TvIcon
+                            sx={{
+                              fontSize: 18,
+                              color: d.isGroup ? "#7b1fa2" : "#1976d2",
+                            }}
+                          />
+                       
+
+                        {/* Texts */}
+                        <Box>
+                          <Typography fontSize={13} fontWeight={600}>
+                            {d.name}
+                          </Typography>
+
+                          <Typography fontSize={11} color="text.secondary">
+                            {d.isGroup ? "Groupe d’écrans" : "Écran individuel"}
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Checkbox checked={selected} size="small" />
+                    </Paper>
+                  </Grid>
+                );
+              })}
+            </Grid>
+
+            {/* Pagination */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 1,
+                mt: 2,
+              }}
+            >
+              <IconButton
+                size="small"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ArrowBackIosNewIcon fontSize="small" />
+              </IconButton>
+
+              <Typography variant="caption" color="text.secondary">
+                Page {page} / {totalPages}
+              </Typography>
+
+              <IconButton
+                size="small"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                <ArrowForwardIosIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          </Box>
+          {/* ------------------------------------------ */}
         </DialogContent>
 
         <DialogActions>
           <Button onClick={handleClose}>Annuler</Button>
+
           <Button
             variant="contained"
-            disabled={!title || !playlist || !selectedDevice}
+            disabled={!title || !playlist || selectedDevices.length === 0}
             onClick={() => {
               setStep(2);
               setTimeline(true);
@@ -162,7 +474,8 @@ export default function CreateScheduleDialog({
         onSave={saveTimeline}
         addscheduleByPlaylistOrDevice={false}
         title={title}
-        selectedDevice={selectedDevice}
+        selectedDevices={selectedDevices}
+        selectedGroupDevices={selectedGroupDevices}
         playlistId={playlist}
         editSchedule={editSchedule}
       />

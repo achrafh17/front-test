@@ -7,11 +7,19 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import { PlaylistDevice, IDevice } from "../../types/api.types";
-import EditTimelineDialog from "../EditTimelineDialog";
 import CircularProgress from "@mui/material/CircularProgress";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import { InputLabel, FormControl, Select, MenuItem } from "@mui/material";
+import {
+  InputLabel,
+  FormControl,
+  Select,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
+  Stack,
+} from "@mui/material";
+import EditTimelineDialog from "../Schedule/EditTimelineDialog";
 
 interface props {
   playlistName: string;
@@ -38,7 +46,7 @@ const PlaylistAddScreen: React.FC<props> = ({
     singles: [],
     groups: [],
   });
-  const [selectedDevice, setSelectedDevice] = useState<number | null>(null);
+  const [selectedDeviceIds, setSelectedDeviceIds] = useState<number[]>([]);
   const [devices, setDevices] = useState<{
     singles: IDevice[];
     groups: IDevice[];
@@ -99,12 +107,18 @@ const PlaylistAddScreen: React.FC<props> = ({
     });
   }, [searchValue, devices]);
 
+  const handleToggleDevice = (id: number) => {
+    setSelectedDeviceIds((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
+    );
+  };
+
   const onSave = async (timeStart: string, timeEnd: string) => {
-    if (!selectedDevice) return;
+    if (selectedDeviceIds?.length === 0) return;
     setIsLoading(true);
     var payload = {
       sessionId: userInfo?.sessionId,
-      deviceId: selectedDevice,
+      deviceId: selectedDeviceIds,
       playlistId,
       timeEnd,
       timeStart,
@@ -148,7 +162,7 @@ const PlaylistAddScreen: React.FC<props> = ({
         setSuccess(true);
         setTimeout(() => {
           setSuccess(null);
-          setSelectedDevice(null);
+          setSelectedDeviceIds([]);
         }, 700);
       }
     } catch (e) {
@@ -243,72 +257,56 @@ const PlaylistAddScreen: React.FC<props> = ({
             </Box>
           </Box>
           {singleDevicesExpanded && (
-            <Box
-              sx={{
-                mt: 1,
-              }}
-            >
-              {/* {searchedDevices.singles.map((device) => {
-                return <DeviceRow key={device.deviceId} device={device} />;
-              })} */}
-              <FormControl fullWidth>
-                <InputLabel id="device-label">Écrans</InputLabel>
-                <Select
-                  labelId="device-label"
-                  value={selectedDevice ?? ""}
-                  label="Écrans"
-                  onChange={(e) => setSelectedDevice(Number(e.target.value))}
-                >
-                  {searchedDevices.singles.map((d) => (
-                    <MenuItem key={d.deviceId} value={d.deviceId}>
-                      {d.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                Choisir les écrans
+              </Typography>
+
+              <Stack spacing={1}>
+                {searchedDevices.singles.map((d) => {
+                  const selected = selectedDeviceIds.includes(d.deviceId);
+
+                  return (
+                    <Box
+                      key={d.deviceId}
+                      onClick={() => handleToggleDevice(d.deviceId)}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        p: 1.5,
+                        borderRadius: 2,
+                        border: selected
+                          ? "2px solid #1976d2"
+                          : "1px solid #e0e0e0",
+                        backgroundColor: selected ? "#f0f7ff" : "white",
+                        cursor: "pointer",
+                        transition: "0.2s",
+                        "&:hover": {
+                          boxShadow: 2,
+                        },
+                      }}
+                    >
+                      <Typography fontWeight={500}>{d.name}</Typography>
+
+                      <Checkbox
+                        checked={selected}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => {
+                          handleToggleDevice(d.deviceId);
+                        }}
+                      />
+                    </Box>
+                  );
+                })}
+              </Stack>
             </Box>
           )}
-
-          {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 2 }}>
-            <Typography sx={{ fontSize: 16 }}>Groupes </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "#e8eded",
-                color: "#84898a",
-                width: 24,
-                height: 24,
-                borderRadius: "50%",
-                padding: 1,
-              }}
-            >
-              <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
-                {searchedDevices.groups.length}
-              </Typography>
-            </Box>
-            <Box
-              sx={{ ml: "auto", cursor: "pointer" }}
-              onClick={() => setGroupDevicesExpanded((old) => !old)}
-            >
-              {groupDevicesExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </Box>
-          </Box> */}
-          {/* {groupDevicesExpanded && (
-            <Box>
-              {searchedDevices.groups.map((device) => {
-                return <DeviceRow key={device.deviceId} device={device} />;
-              })}
-            </Box>
-          )} */}
         </Box>
 
         <Box
           className={` ${
-            selectedDevice !== null && selectedDevice !== undefined
-              ? "slide-top"
-              : "slide-bottom"
+            selectedDeviceIds.length !== 0 ? "slide-top" : "slide-bottom"
           }`}
           sx={{
             width: "100%",
@@ -343,11 +341,13 @@ const PlaylistAddScreen: React.FC<props> = ({
         open={open}
         onClose={() => {
           setOpen(false);
+          setSingleDevicesExpanded(false);
+          setSelectedDeviceIds([]);
         }}
         onSave={onSave}
         addscheduleByPlaylistOrDevice={true}
         title={""}
-        selectedDevice={selectedDevice}
+        selectedDevices={selectedDeviceIds}
         playlistId={playlistId}
         editSchedule={null}
       />

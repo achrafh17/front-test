@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { IDeviceSingle } from "../../../types/api.types";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -18,13 +18,16 @@ import { ReactComponent as StretchDisplayModeSvg } from "../../../assets/svg/str
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
 import { styled } from "@mui/material/styles";
-import { TimeInput } from "@mantine/dates";
+
 import dayjs from "dayjs";
 
 import timezones from "../../../assets/data/timezones.json";
 import useAuth from "../../../hooks/useAuth";
 import { ISchedule } from "../../Schedule/Main";
 import DeviceSchedulePanel from "./DeviceSchedulePanel";
+import ScreenOffInfo from "./screenOffInfo";
+import ScreenOff from "./screenOff";
+import ImmediateShutdown from "./ImmediateShutdown";
 
 interface props {
   deviceInfo: IDeviceSingle;
@@ -36,16 +39,69 @@ const DeviceEditableSettings: React.FC<props> = ({
   onNewDeviceInfo,
 }) => {
   const { userInfo } = useAuth();
-
   const [isInfoExpanded, setIsInfoExpanded] = React.useState(true);
   const [fields, setFields] = React.useState<IDeviceSingle>(deviceInfo);
   const [hasChanged, setHasChanged] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [success, setSuccess] = React.useState<boolean | null>(null);
   const [schedules, setSchedules] = useState<ISchedule[]>([]);
-  const [actualSchedule, setActualSchedule] = useState<ISchedule>();
-  const [nextSchedule, setNextSchedule] = useState<ISchedule>();
-  const [otherSchedules, setOtherSchedules] = useState<ISchedule[]>([]);
+
+  const [openSchedulePanel, setOpenSchedulePanel] = useState(false);
+  const [openScreenOff, setOpenScreenOff] = useState(false);
+  const [screenOffInfoOpen, setscreenOffInfoOpen] = useState(false);
+  const [error, setError] = useState("");
+  const [warning, setWarning] = useState("");
+  const today = new Date();
+  const [startDate, setStartDate] = useState(today);
+  const [startTime, setStartTime] = useState(() => {
+    const s = new Date();
+    s.setHours(8, 0, 0, 0);
+    return s;
+  });
+  const [endDate, setEndDate] = useState(today);
+  const [endTime, setEndTime] = useState(() => {
+    const s = new Date();
+    s.setHours(8, 0, 0, 0);
+    return s;
+  });
+
+  useEffect(() => {
+    if (!startTime || !endTime || !startDate || !endDate) return;
+    const start = new Date(startDate);
+    start.setHours(
+      startTime.getHours(),
+      startTime.getMinutes(),
+      startTime.getSeconds(),
+    );
+    const end = new Date(endDate);
+    end.setHours(
+      endTime.getHours(),
+      endTime.getMinutes(),
+      endTime.getSeconds(),
+    );
+    const hasConflict = schedules.some(
+      (s) =>
+        s.startDate &&
+        s.endDate &&
+        new Date(s.startDate) < end &&
+        new Date(s.endDate) > start,
+    );
+    let timeoutId: NodeJS.Timeout;
+
+    if (hasConflict) {
+      setWarning("A content is scheduled at this time");
+      timeoutId = setTimeout(() => {
+        setWarning("");
+      }, 4000);
+    } else {
+      setWarning("");
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [startDate, endDate, startTime, endTime, schedules]);
+
   const updateDeviceInfo = async () => {
     if (userInfo?.sessionId) {
       try {
@@ -69,55 +125,130 @@ const DeviceEditableSettings: React.FC<props> = ({
           if (onNewDeviceInfo !== undefined) {
             onNewDeviceInfo(resJson.result as IDeviceSingle);
           }
+          setOpenScreenOff(false);
           return true;
         } else {
           return false;
         }
       } catch (e) {
+        console.log("error from device setting", e);
         return false;
       }
     }
   };
+  //----------------------Schedules Part---------------------------------------------------------
   useEffect(() => {
     fetch(
       `http://localhost:8000/get-schedules-by-device?sessionId=${userInfo?.sessionId}&deviceId=${deviceInfo.deviceId}`,
     )
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
         if (!data.success) {
           setSchedules([]);
-          setActualSchedule(undefined);
-          setNextSchedule(undefined);
           return;
         }
 
         setSchedules(data.schedules);
-        const now = new Date();
-        const actual = data.schedules?.find(
-          (s: ISchedule) =>
-            s.startDate &&
-            new Date(s?.startDate) <= now &&
-            s.endDate &&
-            new Date(s?.endDate) > now,
-        );
-        setActualSchedule(actual);
-        const next = data.schedules.find(
-          (s: ISchedule) => s.startDate && new Date(s.startDate) > now,
-        );
-        setNextSchedule(next);
-
-        const others = data.schedules.filter(
-          (s: ISchedule) =>
-            s.scheduleId !== actual?.scheduleId &&
-            s.scheduleId !== next?.scheduleId &&
-            s.endDate &&
-            new Date(s.endDate) > now,
-        );
-        setOtherSchedules(others);
       });
+
     return () => {};
   }, [userInfo?.sessionId, deviceInfo?.deviceId]);
+
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const getMinutes = (date: string) => {
+    if (!date) return undefined;
+    return new Date(date).getHours() * 60 + new Date(date).getMinutes();
+  };
+
+  const actualSchedule = useMemo(() => {
+    return schedules?.find((s: ISchedule) => {
+      if (!s.startDate || !s.endDate) return false;
+
+      if (s.repeatType === "daily") {
+        const start = getMinutes(s.startDate);
+        const end = getMinutes(s.endDate);
+        if (start === undefined || end === undefined) return false;
+
+        if (start < end) {
+          return start <= nowMinutes && end > nowMinutes;
+        }
+
+        return nowMinutes >= start || nowMinutes < end;
+      }
+
+      return new Date(s?.startDate) <= now && new Date(s?.endDate) > now;
+    });
+  }, [schedules, nowMinutes]);
+
+  const nextSchedule = useMemo(() => {
+    if (!schedules.length) return undefined;
+
+    let next: ISchedule | undefined;
+    let minDiff = Infinity;
+
+    for (const s of schedules) {
+      if (!s.startDate || !s.endDate) continue;
+
+      if (s.scheduleId === actualSchedule?.scheduleId) continue;
+
+      let diff: number | null = null;
+
+      // ---------- DAILY ----------
+      if (s.repeatType === "daily") {
+        const startMinutes = getMinutes(s.startDate);
+        if (startMinutes === undefined) continue;
+
+        const minutesDiff =
+          startMinutes > nowMinutes
+            ? startMinutes - nowMinutes
+            : 1440 - nowMinutes + startMinutes;
+
+        diff = minutesDiff * 60 * 1000;
+      }
+
+      // ---------- NORMAL ----------
+      else {
+        const startDate = new Date(s.startDate);
+        if (startDate <= now) continue;
+
+        diff = startDate.getTime() - now.getTime();
+      }
+
+      if (diff !== null && diff < minDiff) {
+        minDiff = diff;
+        next = s;
+      }
+    }
+
+    return next;
+  }, [schedules, now, nowMinutes, actualSchedule]);
+
+  const otherSchedules = useMemo(() => {
+    return schedules.filter(
+      (s) =>
+        s.scheduleId !== actualSchedule?.scheduleId &&
+        s.scheduleId !== nextSchedule?.scheduleId &&
+        s.startDate &&
+        new Date(s?.startDate) > now &&
+        s.repeatType !== "daily",
+    );
+  }, [schedules, actualSchedule, nextSchedule]);
+
+  const dailySchedules = useMemo(() => {
+    return [...schedules]
+      .filter((s: ISchedule) => s.repeatType === "daily")
+      .sort((a: ISchedule, b: ISchedule) => {
+        if (!a.startDate || !b.startDate) return 0;
+        const aMinutes = getMinutes(a.startDate);
+        const bMinutes = getMinutes(b.startDate);
+        if (typeof aMinutes !== "number" || typeof bMinutes !== "number")
+          return 0;
+        return aMinutes - bMinutes;
+      });
+  }, [schedules]);
+
+  //--------------------------------------------------------------------------------------------------
   const save = async () => {
     setIsLoading(true);
     var success = await updateDeviceInfo();
@@ -164,6 +295,7 @@ const DeviceEditableSettings: React.FC<props> = ({
           Paramètres de l'écran
         </Typography>
       </Box>
+      
       <Box
         sx={{
           px: 3,
@@ -175,6 +307,14 @@ const DeviceEditableSettings: React.FC<props> = ({
         }}
         className="hide-scrollbar"
       >
+          {/* --------------------------------------------------------------Turn off screen immediat---------------------------------------------- */}
+
+       
+        <ImmediateShutdown
+          deviceInfo={deviceInfo}
+          sessionId={userInfo ? userInfo?.sessionId : null}
+          actualSchedule={actualSchedule ? actualSchedule : null}
+        />
         <TextField
           autoComplete="off"
           variant="standard"
@@ -348,104 +488,142 @@ const DeviceEditableSettings: React.FC<props> = ({
           )}
         </Box>
 
+      
+        {/* ----------------------- --------------------Turn Off Screen  Schedule  -------------------------------------------------------------- */}
         <Box>
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <IOSSwitch
-              sx={{ mr: 1 }}
-              checked={Boolean(fields.sleepMode)}
-              onChange={(e) => {
-                setHasChanged(true);
-                if (e.target.checked) {
-                  setFields((old) => {
-                    return {
-                      ...old,
-                      sleepMode: true,
-                      sleepStart: dayjs()
-                        .hour(0)
-                        .minute(0)
-                        .second(0)
-                        .toISOString(),
-                      sleepEnd: dayjs()
-                        .hour(23)
-                        .minute(59)
-                        .second(59)
-                        .toISOString(),
-                    };
-                  });
-                } else {
-                  setFields((old) => {
-                    return { ...old, sleepMode: false };
-                  });
+          <Box
+            sx={{
+              mt: 2,
+              mb: 1,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              sx={{
+                color: "#6b7280",
+                fontSize: 14,
+                fontWeight: 500,
+                mb: 1,
+              }}
+            >
+              Mode Veille{" "}
+            </Typography>
+            <Typography
+              className="show-info"
+              variant="subtitle1"
+              sx={{
+                color: "#9ca0a1",
+                cursor: "pointer",
+                fontSize: 12,
+                textDecoration: "underline",
+              }}
+              onClick={() => {
+                setOpenScreenOff((prev) => !prev);
+                setscreenOffInfoOpen(false);
+                setError("");
+              }}
+            >
+              {openScreenOff ? "Masquer" : "Afficher"}
+            </Typography>
+          </Box>
+          <ScreenOff
+            open={openScreenOff}
+            onClose={() => setOpenScreenOff(false)}
+            deviceId={deviceInfo?.deviceId}
+            setFields={setFields}
+          />
+
+          {/* ------------------------------------------------------------------------------------------------------------ */}
+          <Box
+            sx={{
+              mt: 2,
+              mb: 1,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              sx={{
+                color: "#6b7280",
+                fontSize: 14,
+                fontWeight: 500,
+                mb: 1,
+              }}
+            >
+              {" "}
+              Mode veille programmé
+            </Typography>
+            <Typography
+              className="show-info"
+              variant="subtitle1"
+              sx={{
+                color: "#9ca0a1",
+                cursor: "pointer",
+                fontSize: 12,
+                textDecoration: "underline",
+              }}
+              onClick={() => {
+                if (!openScreenOff) {
+                  setscreenOffInfoOpen((prev) => !prev);
                 }
               }}
-            />
-            <Typography sx={{ color: "#9ca0a1" }}>Mode Veille</Typography>
+            >
+              {screenOffInfoOpen ? "Masquer" : "Afficher"}
+            </Typography>
           </Box>
-          {/* -------------- Schedule information for device-------------------- */}
+
+          <ScreenOffInfo
+            userInfo={userInfo}
+            open={screenOffInfoOpen}
+            deviceId={deviceInfo?.deviceId}
+          />
+
+          {/* -------------- --------------------Schedule information for device----------------------------------------------------------- */}
+          <Box
+            sx={{
+              mt: 2,
+              mb: 1,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              sx={{
+                color: "#6b7280",
+                fontSize: 14,
+                fontWeight: 500,
+                mb: 1,
+              }}
+            >
+              Planning de diffusion
+            </Typography>
+            <Typography
+              className="show-info"
+              variant="subtitle1"
+              sx={{
+                color: "#9ca0a1",
+                cursor: "pointer",
+                fontSize: 12,
+                textDecoration: "underline",
+              }}
+              onClick={() => {
+                setOpenSchedulePanel((prev) => !prev);
+              }}
+            >
+              {openSchedulePanel ? "Masquer" : "Afficher"}
+            </Typography>
+          </Box>
           <DeviceSchedulePanel
             actualSchedule={actualSchedule}
             nextSchedule={nextSchedule}
             otherSchedules={otherSchedules}
+            dailySchedules={dailySchedules}
+            open={openSchedulePanel}
           />
-          {!!fields.sleepMode && (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <TimeInput
-                style={{
-                  width: "45%",
-                }}
-                withSeconds
-                label="Début:"
-                labelProps={{
-                  style: {
-                    color: "#9ca0a1",
-                    fontSize: 12,
-                    fontWeight: 400,
-                  },
-                }}
-                value={dayjs(fields.sleepStart).toDate()}
-                onChange={(newTime) => {
-                  setHasChanged(true);
-                  setFields((old) => {
-                    return {
-                      ...old,
-                      sleepStart: newTime.toISOString(),
-                    };
-                  });
-                }}
-              />
-
-              <TimeInput
-                withSeconds
-                style={{
-                  width: "45%",
-                }}
-                label="Fin:"
-                labelProps={{
-                  style: {
-                    color: "#9ca0a1",
-                    fontSize: 12,
-                    fontWeight: 400,
-                  },
-                }}
-                value={dayjs(fields.sleepEnd).toDate()}
-                onChange={(newTime) => {
-                  setHasChanged(true);
-                  setFields((old) => {
-                    return {
-                      ...old,
-                      sleepEnd: newTime.toISOString(),
-                    };
-                  });
-                }}
-              />
-            </Box>
-          )}
         </Box>
 
         <Select

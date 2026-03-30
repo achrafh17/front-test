@@ -6,9 +6,9 @@ import useAuth from "../../hooks/useAuth";
 // @ts-ignore
 import { ReactComponent as AddSvg } from "../../assets/svg/add-active.svg";
 import dayjs from "dayjs";
-import EditTimelineDialog from "../EditTimelineDialog";
-import { IPlaylistInfo } from "../../types/api.types";
 
+import { IPlaylistInfo } from "../../types/api.types";
+import EditTimelineDialog from "../Schedule/EditTimelineDialog";
 interface props {
   deviceId: number;
   onSuccess: () => void;
@@ -23,7 +23,6 @@ const DeviceAddPlaylist: React.FC<props> = ({ deviceId, onSuccess }) => {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(
     null,
   );
-
   const fetchPlaylists = (sessionId: string) => {
     fetch(
       `https://www.powersmartscreen.com/get-playlists?sessionId=${sessionId}`,
@@ -240,7 +239,7 @@ const DeviceAddPlaylist: React.FC<props> = ({ deviceId, onSuccess }) => {
         addscheduleByPlaylistOrDevice={true}
         onSave={onTimelineSave}
         title={""}
-        selectedDevice={deviceId}
+        selectedDevices={[deviceId]}
         playlistId={selectedPlaylistId}
         editSchedule={null}
       />
