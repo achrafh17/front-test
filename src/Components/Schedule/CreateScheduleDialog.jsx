@@ -175,8 +175,7 @@ export default function CreateScheduleDialog({
     Math.ceil((devices.length || 0) / ITEMS_PER_PAGE),
   );
   useEffect(() => {
-    console.log("here are the selected devices", selectedDevices);
-    console.log("group", selectedGroupDevices);
+
     return () => {};
   }, [selectedDevices, selectedGroupDevices]);
   const devicesToShow = devices.slice(startPage, endPage);
@@ -387,14 +386,12 @@ export default function CreateScheduleDialog({
                       }}
                     >
                       <Box display="flex" alignItems="center" gap={1.2}>
-                       
-                          <TvIcon
-                            sx={{
-                              fontSize: 18,
-                              color: d.isGroup ? "#7b1fa2" : "#1976d2",
-                            }}
-                          />
-                       
+                        <TvIcon
+                          sx={{
+                            fontSize: 18,
+                            color: d.isGroup ? "#7b1fa2" : "#1976d2",
+                          }}
+                        />
 
                         {/* Texts */}
                         <Box>
@@ -454,7 +451,11 @@ export default function CreateScheduleDialog({
 
           <Button
             variant="contained"
-            disabled={!title || !playlist || selectedDevices.length === 0}
+            disabled={
+              !title ||
+              !playlist ||
+              (selectedDevices.length === 0 &&selectedGroupDevices.length === 0)
+            }
             onClick={() => {
               setStep(2);
               setTimeline(true);
