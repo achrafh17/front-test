@@ -347,7 +347,7 @@ export default function EditTimelineDialog({
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button variant="outlined" onClick={onClose}>
-          ANNULER
+          RETOUR 
         </Button>
         <Button variant="contained" onClick={handleSubmit}>
           ENREGISTRER

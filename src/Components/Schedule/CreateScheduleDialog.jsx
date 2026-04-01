@@ -163,7 +163,6 @@ export default function CreateScheduleDialog({
   const [title, setTitle] = useState(editSchedule?.title || "");
   const [playlist, setPlaylist] = useState(editSchedule?.playlistId || "");
   const [selectedDevices, setSelectedDevices] = useState([]);
-  const [selectedGroupDevices, setSelectedGroupDevices] = useState([]);
   const [step, setStep] = useState(1);
   const [openTimeline, setTimeline] = useState(false);
   const [page, setPage] = useState(1);
@@ -174,10 +173,7 @@ export default function CreateScheduleDialog({
     1,
     Math.ceil((devices.length || 0) / ITEMS_PER_PAGE),
   );
-  useEffect(() => {
 
-    return () => {};
-  }, [selectedDevices, selectedGroupDevices]);
   const devicesToShow = devices.slice(startPage, endPage);
 
   const saveTimeline = (data) => {
@@ -194,7 +190,6 @@ export default function CreateScheduleDialog({
     setTitle("");
     setPlaylist("");
     setSelectedDevices([]);
-    setSelectedGroupDevices([]);
     setStep(1);
     setTimeline(false);
     setPage(1);
@@ -207,20 +202,12 @@ export default function CreateScheduleDialog({
         setTitle(editSchedule.title || "");
         setPlaylist(editSchedule.playlistId || "");
         setSelectedDevices(
-          editSchedule.devices
-            .filter((device) => !device.isGroup)
-            .map((device) => device.deviceId),
-        );
-        setSelectedGroupDevices(
-          editSchedule.devices
-            .filter((device) => device.isGroup)
-            .map((device) => device.deviceId),
+          editSchedule.devices.map((device) => device.deviceId),
         );
       } else {
         setTitle("");
         setPlaylist("");
         setSelectedDevices([]);
-        setSelectedGroupDevices([]);
       }
       setStep(1);
       setTimeline(false);
@@ -295,14 +282,8 @@ export default function CreateScheduleDialog({
                 variant="text"
                 sx={{ textTransform: "none", fontSize: 12 }}
                 onClick={() => {
-                  const allDevices = devices
-                    .filter((d) => !d.isGroup)
-                    .map((d) => d.deviceId);
-                  const allGroups = devices
-                    .filter((d) => d.isGroup)
-                    .map((d) => d.deviceId);
+                  const allDevices = devices.map((d) => d.deviceId);
                   setSelectedDevices(allDevices);
-                  setSelectedGroupDevices(allGroups);
                 }}
               >
                 Tout sélectionner
@@ -315,41 +296,29 @@ export default function CreateScheduleDialog({
                 sx={{ textTransform: "none", fontSize: 12 }}
                 onClick={() => {
                   setSelectedDevices([]);
-                  setSelectedGroupDevices([]);
                 }}
               >
                 Tout désélectionner
               </Button>
               <Typography variant="caption" color="text.secondary">
-                {selectedDevices?.length + selectedGroupDevices.length}{" "}
-                sélectionné(s)
+                {selectedDevices?.length} sélectionné(s)
               </Typography>
             </Box>
 
             {/* Grid */}
             <Grid container spacing={1.5}>
               {devicesToShow.map((d) => {
-                const selected = d.isGroup
-                  ? selectedGroupDevices.includes(d.deviceId)
-                  : selectedDevices.includes(d.deviceId);
+                const selected = selectedDevices.includes(d.deviceId);
 
                 return (
                   <Grid item xs={12} sm={6} key={d.deviceId}>
                     <Paper
                       onClick={() => {
-                        if (d.isGroup) {
-                          setSelectedGroupDevices((prev) =>
-                            prev.includes(d.deviceId)
-                              ? prev.filter((id) => id !== d.deviceId)
-                              : [...prev, d.deviceId],
-                          );
-                        } else {
-                          setSelectedDevices((prev) =>
-                            prev.includes(d.deviceId)
-                              ? prev.filter((id) => id !== d.deviceId)
-                              : [...prev, d.deviceId],
-                          );
-                        }
+                        setSelectedDevices((prev) =>
+                          prev.includes(d.deviceId)
+                            ? prev.filter((id) => id !== d.deviceId)
+                            : [...prev, d.deviceId],
+                        );
                       }}
                       sx={{
                         px: 2,
@@ -451,11 +420,7 @@ export default function CreateScheduleDialog({
 
           <Button
             variant="contained"
-            disabled={
-              !title ||
-              !playlist ||
-              (selectedDevices.length === 0 &&selectedGroupDevices.length === 0)
-            }
+            disabled={!title || !playlist || selectedDevices.length === 0}
             onClick={() => {
               setStep(2);
               setTimeline(true);
@@ -476,7 +441,6 @@ export default function CreateScheduleDialog({
         addscheduleByPlaylistOrDevice={false}
         title={title}
         selectedDevices={selectedDevices}
-        selectedGroupDevices={selectedGroupDevices}
         playlistId={playlist}
         editSchedule={editSchedule}
       />
