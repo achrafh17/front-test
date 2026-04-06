@@ -61,7 +61,7 @@ const ScheduleList: React.FC<Props> = ({
     if (!showInfoSchedule) return;
     const timer = setTimeout(() => {
       setShowInfoSchedule(null);
-    }, 5000);
+    }, 16000);
     return () => {
       clearTimeout(timer);
     };

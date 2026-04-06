@@ -88,13 +88,7 @@ export default function Main() {
     )
       .then((res) => res.json())
       .then((data) => {
-        //adding the devices inside groups
-        const group_Devices = data.result
-          .filter((d: IDevice) => d.isGroup)
-          .map((d: IDevice) => d.children)
-          .flat();
-        const allDevices = [...data.result, ...group_Devices];
-        setDevices(allDevices);
+        setDevices(data.result);
 
         console.log("get devices", data);
       });

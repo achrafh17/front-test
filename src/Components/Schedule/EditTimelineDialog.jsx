@@ -35,13 +35,10 @@ export default function EditTimelineDialog({
   onSave,
   title,
   selectedDevices,
-  selectedGroupDevices,
   playlistId,
   editSchedule,
   addscheduleByPlaylistOrDevice,
 }) {
-  console.log("here are the selected devices", selectedDevices);
-  console.log("group", selectedGroupDevices);
   const { userInfo } = useAuth();
 
   const today = new Date();
@@ -79,7 +76,7 @@ export default function EditTimelineDialog({
       endDate,
       startTime,
       endTime,
-      selectedDevices,selectedGroupDevices,
+      selectedDevices,
       repeatType,
     });
     if (errorMessage) {
@@ -93,7 +90,6 @@ export default function EditTimelineDialog({
       title: addscheduleByPlaylistOrDevice ? editTimeLineTitle : title,
       playlistId: playlistId,
       deviceIdsRaw: selectedDevices,
-      groupIdsRaw:selectedGroupDevices,
       startDate: mergeDateAndTime(
         startDate,
         startTime,
@@ -347,7 +343,7 @@ export default function EditTimelineDialog({
 
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button variant="outlined" onClick={onClose}>
-          RETOUR 
+          RETOUR
         </Button>
         <Button variant="contained" onClick={handleSubmit}>
           ENREGISTRER

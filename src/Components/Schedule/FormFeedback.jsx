@@ -33,16 +33,14 @@ export default function FormFeedback({ error, validation }) {
                 }}
               />
               <Box sx={{ fontWeight: 700, fontSize: 15, color: "error.main" }}>
-                {error.type === "CONFLICT" ? "Créneau indisponible":"Erreur"}
+                {error.type === "CONFLICT" ? "Créneau indisponible" : "Erreur"}
               </Box>
             </Box>
 
             {error.type === "CONFLICT" ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                 <Box sx={{ fontSize: 12.5, color: "text.secondary" }}>
-                  {error.screens?.length > 1
-                    ? "Conflit détecté sur l’un de ces écrans"
-                    : "Conflit détecté sur cet écran"}
+                  Des conflits ont été détectés dans certains écrans ou groupes
                 </Box>
 
                 <Box

@@ -22,16 +22,12 @@ export const validateSchedule = ({
   startTime,
   endTime,
   selectedDevices,
-  selectedGroupDevices,
   repeatType,
 }) => {
   const now = new Date();
   const start = mergeDateAndTime(startDate, startTime, repeatType);
   const end = mergeDateAndTime(endDate, endTime, repeatType);
-  if (
-    (!selectedDevices || selectedDevices.length === 0) &&
-    (!selectedGroupDevices || selectedGroupDevices.length === 0)
-  )
+  if (!selectedDevices || selectedDevices.length === 0)
     return "Veuillez choisir un écran.";
   if (!startDate) return "Veuillez choisir une date de début.";
   if (!endDate) return "Veuillez sélectionner la date de fin.";

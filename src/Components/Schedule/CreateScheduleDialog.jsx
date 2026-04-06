@@ -17,7 +17,6 @@ import {
   Box,
   IconButton,
 } from "@mui/material";
-import DvrIcon from "@mui/icons-material/Dvr";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import TvIcon from "@mui/icons-material/Tv";
@@ -198,11 +197,14 @@ export default function CreateScheduleDialog({
   useEffect(() => {
     if (open) {
       if (editSchedule) {
+        const deviceIds = devices.map((device) => device.deviceId);
         console.log(editSchedule);
         setTitle(editSchedule.title || "");
         setPlaylist(editSchedule.playlistId || "");
         setSelectedDevices(
-          editSchedule.devices.map((device) => device.deviceId),
+          editSchedule.devices
+            .filter((device) => deviceIds.includes(device.deviceId))
+            .map((device) => device.deviceId),
         );
       } else {
         setTitle("");
