@@ -20,6 +20,8 @@ import {
   Stack,
 } from "@mui/material";
 import EditTimelineDialog from "../Schedule/EditTimelineDialog";
+import DeviceList from "./DeviceList";
+import Collapse from "@mui/material/Collapse";
 
 interface props {
   playlistName: string;
@@ -37,8 +39,8 @@ const PlaylistAddScreen: React.FC<props> = ({
   const { userInfo } = useAuth();
   const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState("");
-  const [singleDevicesExpanded, setSingleDevicesExpanded] = useState(true);
-  const [groupDevicesExpanded, setGroupDevicesExpanded] = useState(true);
+  const [singleDevicesExpanded, setSingleDevicesExpanded] = useState(false);
+  const [groupDevicesExpanded, setGroupDevicesExpanded] = useState(false);
   const [searchedDevices, setSearchedDevices] = useState<{
     singles: IDevice[];
     groups: IDevice[];
@@ -221,101 +223,174 @@ const PlaylistAddScreen: React.FC<props> = ({
         }}
         placeholder="Rechercher..."
       />
-      <Box sx={{ padding: 3 }}>
+      <Box sx={{ p: 3 }}>
         <Box
           sx={{
             height: "calc(100vh - 60px - 81px - 42px - 80px)",
-            maxHeight: "calc(100vh - 60px - 81px - 42px - 80px)",
-            overflowY: "scroll",
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
           }}
           className="hide-scrollbar"
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography sx={{ fontSize: 16 }}>Écrans </Typography>
+          {/* ===== ECRANS ===== */}
+          <Box
+            sx={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 3,
+              overflow: "hidden",
+              backgroundColor: "white",
+            }}
+          >
             <Box
+              onClick={() => {
+                if (searchedDevices.singles.length !== 0)
+                  setSingleDevicesExpanded((old) => !old);
+              }}
               sx={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "#e8eded",
-                color: "#84898a",
-                width: 24,
-                height: 24,
-                borderRadius: "50%",
-                padding: 1,
+                justifyContent: "space-between",
+                px: 2,
+                py: 1.5,
+                cursor: "pointer",
+                backgroundColor: "#f9fafb",
+                transition: "0.2s",
+                "&:hover": {
+                  backgroundColor: "#f1f5f9",
+                },
               }}
             >
-              <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
-                {searchedDevices.singles.length}
-              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 15 }}>
+                  Écrans
+                </Typography>
+
+                <Box
+                  sx={{
+                    backgroundColor: "#e2e8f0",
+                    color: "#334155",
+                    fontSize: 12,
+                    px: 1.2,
+                    py: 0.3,
+                    borderRadius: "999px",
+                    fontWeight: 500,
+                  }}
+                >
+                  {searchedDevices.singles.length}
+                </Box>
+              </Box>
+              <ExpandMoreIcon
+                sx={{
+                  transform: singleDevicesExpanded
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+                  transition: "0.3s",
+                }}
+              />{" "}
             </Box>
-            <Box
-              sx={{ ml: "auto", cursor: "pointer" }}
-              onClick={() => setSingleDevicesExpanded((old) => !old)}
+
+            <Collapse
+              in={singleDevicesExpanded && searchedDevices.singles.length !== 0}
+              timeout={300}
+              unmountOnExit
             >
-              {singleDevicesExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            </Box>
+              <Box sx={{ p: 2 }}>
+                <DeviceList
+                  title="Ecrans"
+                  devices={searchedDevices.singles}
+                  selectedDeviceIds={selectedDeviceIds}
+                  handleToggleDevice={handleToggleDevice}
+                />
+              </Box>
+            </Collapse>
           </Box>
-          {singleDevicesExpanded && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                Choisir les écrans
-              </Typography>
 
-              <Stack spacing={1}>
-                {searchedDevices.singles.map((d) => {
-                  const selected = selectedDeviceIds.includes(d.deviceId);
+          {/* ===== GROUPES ===== */}
+          <Box
+            sx={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 3,
+              overflow: "hidden",
+              backgroundColor: "white",
+            }}
+          >
+            <Box
+              onClick={() => {
+                if (searchedDevices.groups.length !== 0)
+                  setGroupDevicesExpanded((old) => !old);
+              }}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                px: 2,
+                py: 1.5,
+                cursor: "pointer",
+                backgroundColor: "#f8fafc",
+                transition: "0.2s",
+                "&:hover": {
+                  backgroundColor: "#eef2f7",
+                },
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 15 }}>
+                  Groupes
+                </Typography>
 
-                  return (
-                    <Box
-                      key={d.deviceId}
-                      onClick={() => handleToggleDevice(d.deviceId)}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        p: 1.5,
-                        borderRadius: 2,
-                        border: selected
-                          ? "2px solid #1976d2"
-                          : "1px solid #e0e0e0",
-                        backgroundColor: selected ? "#f0f7ff" : "white",
-                        cursor: "pointer",
-                        transition: "0.2s",
-                        "&:hover": {
-                          boxShadow: 2,
-                        },
-                      }}
-                    >
-                      <Typography fontWeight={500}>{d.name}</Typography>
-
-                      <Checkbox
-                        checked={selected}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={() => {
-                          handleToggleDevice(d.deviceId);
-                        }}
-                      />
-                    </Box>
-                  );
-                })}
-              </Stack>
+                <Box
+                  sx={{
+                    backgroundColor: "#e2e8f0",
+                    color: "#334155",
+                    fontSize: 12,
+                    px: 1.2,
+                    py: 0.3,
+                    borderRadius: "999px",
+                    fontWeight: 500,
+                  }}
+                >
+                  {searchedDevices.groups.length}
+                </Box>
+              </Box>
+              <ExpandMoreIcon
+                sx={{
+                  transform: groupDevicesExpanded
+                    ? "rotate(180deg)"
+                    : "rotate(0deg)",
+                  transition: "0.3s",
+                }}
+              />{" "}
             </Box>
-          )}
+
+            <Collapse
+              in={groupDevicesExpanded && searchedDevices.groups.length !== 0}
+              timeout={300}
+              unmountOnExit
+            >
+              <Box sx={{ p: 2 }}>
+                <DeviceList
+                  title="Groupes"
+                  devices={searchedDevices.groups}
+                  selectedDeviceIds={selectedDeviceIds}
+                  handleToggleDevice={handleToggleDevice}
+                />
+              </Box>
+            </Collapse>
+          </Box>
         </Box>
 
         <Box
-          className={` ${
-            selectedDeviceIds.length !== 0 ? "slide-top" : "slide-bottom"
-          }`}
           sx={{
+            position: "sticky",
+            bottom: 0,
+            zIndex: 10,
             width: "100%",
-            padding: 2,
+            mt: 2,
+            p: 2,
             backgroundColor: "white",
-            boxShadow: "0px 3px 15px 6px rgba(0,0,0,0.3)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            borderTop: "1px solid #e5e7eb",
           }}
         >
           {success === true ? (
@@ -328,9 +403,8 @@ const PlaylistAddScreen: React.FC<props> = ({
             <Button
               variant="contained"
               fullWidth
-              onClick={() => {
-                setOpen(true);
-              }}
+              onClick={() => setOpen(true)}
+              disabled={selectedDeviceIds.length === 0}
             >
               Ajouter
             </Button>

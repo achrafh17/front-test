@@ -102,7 +102,7 @@ export default function ScheduleInfoDialog({
                           borderRadius: 2,
                           border: "1px solid",
                           borderColor: d.isGroup ? "#e1bee7" : "#bbdefb",
-                          backgroundColor: d.isGroup ? "#f6f0ff" : "#213147",
+                          backgroundColor: d.isGroup ? "#f6f0ff" : "#f3f8ff",
 
                           alignSelf: "flex-start",
                         }}
@@ -167,7 +167,7 @@ export default function ScheduleInfoDialog({
                                       px: 1,
                                       py: 0.7,
                                       borderRadius: 1.5,
-                                      backgroundColor: "#ffffff",
+                                      backgroundColor: "#f3f8ff",
                                       border: "1px solid #e0e0e0",
                                     }}
                                   >
