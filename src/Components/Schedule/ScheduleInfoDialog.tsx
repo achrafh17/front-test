@@ -152,7 +152,6 @@ export default function ScheduleInfoDialog({
                           )}
                         </Box>
 
-                        {/* CHILDREN GRID */}
                         {d.isGroup && (
                           <Collapse in={isOpen} timeout={250} unmountOnExit>
                             <Grid container spacing={1} sx={{ mt: 1 }}>

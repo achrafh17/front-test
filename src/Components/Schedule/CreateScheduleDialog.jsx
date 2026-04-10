@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -37,10 +37,18 @@ const Divider = styled("div")({
 export default function CreateScheduleDialog({
   open,
   onClose,
-  editSchedule,
-  onSave,
+  onAdd,
   playlists,
+  scheduleData,
+  setScheduleData,
   devices,
+  onValidate,
+  step,
+  setStep,
+  validationError,
+  openValidateScheduleDialog,
+  addScheduleValidationError,
+  addScheduleValidationSuccess,
 }) {
   const devicesExamples = [
     {
@@ -159,10 +167,6 @@ export default function CreateScheduleDialog({
     },
   ];
 
-  const [title, setTitle] = useState(editSchedule?.title || "");
-  const [playlist, setPlaylist] = useState(editSchedule?.playlistId || "");
-  const [selectedDevices, setSelectedDevices] = useState([]);
-  const [step, setStep] = useState(1);
   const [openTimeline, setTimeline] = useState(false);
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
@@ -174,59 +178,25 @@ export default function CreateScheduleDialog({
   );
 
   const devicesToShow = devices.slice(startPage, endPage);
-
-  const saveTimeline = (data) => {
-    onSave({
-      scheduleId: editSchedule ? editSchedule.scheduleId : Date.now(),
-      title,
-      playlistId: playlist,
-      deviceIds: selectedDevices,
-      ...data,
-    });
-    handleClose();
-  };
   const handleClose = () => {
-    setTitle("");
-    setPlaylist("");
-    setSelectedDevices([]);
+    setScheduleData((prev) => ({ ...prev, title: "" }));
+    setScheduleData((prev) => ({ ...prev, playlist: {} }));
+    setScheduleData((prev) => ({ ...prev, devices: [] }));
     setStep(1);
     setTimeline(false);
     setPage(1);
     onClose();
   };
-  useEffect(() => {
-    if (open) {
-      if (editSchedule) {
-        const deviceIds = devices.map((device) => device.deviceId);
-        console.log(editSchedule);
-        setTitle(editSchedule.title || "");
-        setPlaylist(editSchedule.playlistId || "");
-        setSelectedDevices(
-          editSchedule.devices
-            .filter((device) => deviceIds.includes(device.deviceId))
-            .map((device) => device.deviceId),
-        );
-      } else {
-        setTitle("");
-        setPlaylist("");
-        setSelectedDevices([]);
-      }
-      setStep(1);
-      setTimeline(false);
-    }
-  }, [open, editSchedule]);
 
   return (
     <>
       <Dialog
         open={open && step === 1}
-        onClose={handleClose}
+        onClose={onClose}
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>
-          {editSchedule ? "Modifier un Schedule" : "Créer un Schedule"}
-        </DialogTitle>
+        <DialogTitle>Créer un Schedule</DialogTitle>
 
         {/* Ligne de séparation propre */}
         <Divider />
@@ -236,20 +206,27 @@ export default function CreateScheduleDialog({
             label="Titre du calendrier"
             placeholder="Ex: Playlist matin magasin"
             fullWidth
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={scheduleData.title}
+            onChange={(e) =>
+              setScheduleData((prev) => ({ ...prev, title: e.target.value }))
+            }
           />
 
           <StyledFormControl fullWidth>
             <InputLabel id="playlist-label">Playlist</InputLabel>
             <Select
               labelId="playlist-label"
-              value={playlist}
+              value={scheduleData.playlist}
               label="Playlist"
-              onChange={(e) => setPlaylist(e.target.value)}
+              onChange={(e) =>
+                setScheduleData((prev) => ({
+                  ...prev,
+                  playlist: e.target.value,
+                }))
+              }
             >
               {playlists.map((p) => (
-                <MenuItem key={p.playlistId} value={p.playlistId}>
+                <MenuItem key={p.playlistId} value={p}>
                   {p.name}
                 </MenuItem>
               ))}
@@ -284,8 +261,7 @@ export default function CreateScheduleDialog({
                 variant="text"
                 sx={{ textTransform: "none", fontSize: 12 }}
                 onClick={() => {
-                  const allDevices = devices.map((d) => d.deviceId);
-                  setSelectedDevices(allDevices);
+                  setScheduleData((prev) => ({ ...prev, devices: devices }));
                 }}
               >
                 Tout sélectionner
@@ -297,30 +273,37 @@ export default function CreateScheduleDialog({
                 color="inherit"
                 sx={{ textTransform: "none", fontSize: 12 }}
                 onClick={() => {
-                  setSelectedDevices([]);
+                  setScheduleData((prev) => ({ ...prev, devices: [] }));
                 }}
               >
                 Tout désélectionner
               </Button>
               <Typography variant="caption" color="text.secondary">
-                {selectedDevices?.length} sélectionné(s)
+                {scheduleData.devices?.length} sélectionné(s)
               </Typography>
             </Box>
 
             {/* Grid */}
             <Grid container spacing={1.5}>
               {devicesToShow.map((d) => {
-                const selected = selectedDevices.includes(d.deviceId);
+                const selected = scheduleData.devices.some(
+                  (dev) => dev.deviceId === d.deviceId,
+                );
 
                 return (
                   <Grid item xs={12} sm={6} key={d.deviceId}>
                     <Paper
                       onClick={() => {
-                        setSelectedDevices((prev) =>
-                          prev.includes(d.deviceId)
-                            ? prev.filter((id) => id !== d.deviceId)
-                            : [...prev, d.deviceId],
-                        );
+                        setScheduleData((prev) => ({
+                          ...prev,
+                          devices: prev.devices.some(
+                            (device) => device.deviceId === d.deviceId,
+                          )
+                            ? prev.devices.filter(
+                                (device) => device.deviceId !== d.deviceId,
+                              )
+                            : [...prev.devices, d],
+                        }));
                       }}
                       sx={{
                         px: 2,
@@ -418,11 +401,15 @@ export default function CreateScheduleDialog({
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={handleClose}>Annuler</Button>
+          <Button onClick={onClose}>Annuler</Button>
 
           <Button
             variant="contained"
-            disabled={!title || !playlist || selectedDevices.length === 0}
+            disabled={
+              !scheduleData.title ||
+              !scheduleData.playlist ||
+              scheduleData.devices.length === 0
+            }
             onClick={() => {
               setStep(2);
               setTimeline(true);
@@ -435,16 +422,17 @@ export default function CreateScheduleDialog({
 
       <EditTimelineDialog
         open={openTimeline}
-        onClose={() => {
-          setTimeline(false);
-          setStep(1);
-        }}
-        onSave={saveTimeline}
-        addscheduleByPlaylistOrDevice={false}
-        title={title}
-        selectedDevices={selectedDevices}
-        playlistId={playlist}
-        editSchedule={editSchedule}
+        onClose={onClose}
+        onAdd={onAdd}
+        onValidate={onValidate}
+        scheduleData={scheduleData}
+        setScheduleData={setScheduleData}
+        step={step}
+        setStep={setStep}
+        validationError={validationError}
+        openValidateScheduleDialog={openValidateScheduleDialog}
+        addScheduleValidationError={addScheduleValidationError}
+        addScheduleValidationSuccess={addScheduleValidationSuccess}
       />
     </>
   );

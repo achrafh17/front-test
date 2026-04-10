@@ -2,7 +2,7 @@
 // @ts-ignore
 import { ReactComponent as SearchSvg } from "../../assets/svg/search.svg";
 import Button from "@mui/material/Button";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Slider from "@mui/material/Slider";
 import { styled } from "@mui/material/styles";
 // import "../../styles/Content.css";
@@ -16,23 +16,29 @@ import useStore from "../../store/store";
 import CreateScheduleDialog from "./CreateScheduleDialog";
 import { Grid } from "@mui/material";
 import { Select, MenuItem, FormControl } from "@mui/material";
-import { IDevice } from "../../types/api.types";
+import { IContent, IDevice, IPlaylist } from "../../types/api.types";
+import { mergeDateAndTime, validateScheduleInput } from "./schedule.utilis";
+interface IPlaylistWithContenets extends IPlaylist {
+  contents: IContent[];
+}
 export interface ISchedule {
-  scheduleId: number;
+  scheduleId: number | null;
   title: string;
   startDate?: string;
+  startTime: string;
+  endTime: string;
   endDate?: string;
   devices?: IDevice[];
   repeatType: string;
+  playlist: IPlaylistWithContenets;
 }
 
 export default function Main() {
   const { userInfo } = useAuth();
+  const today = new Date();
   const [schedules, setSchedules] = useState<ISchedule[]>([]);
   const [openCreate, setOpenCreate] = useState(false);
-  const [editSchedule, setEditSchedule] = useState<ISchedule | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [schedule, setSchedule] = useState<ISchedule>();
   const [playlists, setplaylists] = useState([]);
   const [devices, setDevices] = useState<IDevice[]>([]);
 
@@ -53,9 +59,205 @@ export default function Main() {
   >("startDateAsc");
 
   const { setRsbVariant } = useRSB();
+  const [step, setStep] = useState(1);
+  const [validationError, setValidationError] = useState({});
+  const [openValidateScheduleDialog, setOpenValidateScheduleDialog] =
+    useState(false);
+  const [addScheduleValidationError, setaddScheduleValidationError] = useState(
+    {},
+  );
+  const [addScheduleValidationSuccess, setAddScheduleValidationSuccess] =
+    useState({});
+  const [scheduleData, setScheduleData] = useState<ISchedule>({
+    scheduleId: null,
+    title: "",
+    startDate: "",
+    startTime: "",
+    endDate: "",
+    endTime: "",
+    repeatType: "none",
+    playlist: {
+      contents: [],
+      playlistId: 0,
+      name: "",
+      totalDuration: null,
+      numberOfScreens: null,
+      numberOfWidgets: null,
+      userId: 0,
+    },
+    devices: [],
+  });
+  useEffect(() => {
+    setValidationError({});
+    setaddScheduleValidationError({});
+  }, [step]);
+  const onClose = () => {
+    //  @ts-ignore
+    setScheduleData((prev) => {
+      const s = new Date();
+      s.setHours(8, 0, 0, 0);
+      const e = new Date();
+      e.setHours(18, 0, 0, 0);
+      return {
+        ...prev,
+        startDate: today,
+        endDate: today,
+        startTime: s,
+        endTime: e,
+        repeatType: "none",
+        devices: [],
+        title: "",
+        playlist: {
+          contents: [],
+          playlistId: 0,
+          name: "",
+          totalDuration: null,
+          numberOfScreens: null,
+          numberOfWidgets: null,
+          userId: 0,
+        },
+      };
+    });
+    setOpenCreate(false);
+    setStep(0);
+  };
+  //----------------------------------------------------------------
+  // Validate Schedule
+  //----------------------------------------------------------------
+ 
+  const validateSchedule = () => {
+    setValidationError({});
+    setAddScheduleValidationSuccess({})
+    const errorMessage = validateScheduleInput({
+      startDate: scheduleData.startDate,
+      endDate: scheduleData.endDate,
+      startTime: scheduleData.startTime,
+      endTime: scheduleData.endTime,
+      devices: scheduleData.devices,
+      repeatType: scheduleData.repeatType,
+    });
+    if (errorMessage) {
+      setValidationError((prev) => ({ ...prev, message: errorMessage }));
+      setTimeout(() => {
+        setValidationError({});
+      }, 3000);
+      return;
+    }
+
+    fetch("http://localhost:8000/validate-schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: scheduleData.title,
+        playlistId: scheduleData.playlist.playlistId,
+        deviceIdsRaw: scheduleData.devices?.map((dev) => dev.deviceId),
+        startDate: mergeDateAndTime(
+          scheduleData.startDate,
+          scheduleData.startTime,
+          scheduleData.repeatType,
+        ).toISOString(),
+        endDate: mergeDateAndTime(
+          scheduleData.endDate,
+          scheduleData.endTime,
+          scheduleData.repeatType,
+        ).toISOString(),
+        priority: 1,
+        repeatType: scheduleData.repeatType,
+        isActive: true,
+        sessionId: userInfo?.sessionId,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) {
+          setValidationError(data);
+          setTimeout(() => {
+            setValidationError({});
+          }, 3000);
+          return;
+        }
+        if (data.type === "WARNING") {
+          setAddScheduleValidationSuccess(data);
+        }
+
+        setStep(3);
+        setOpenValidateScheduleDialog(true);
+      })
+      .catch(() => {
+        setValidationError((prev) => ({ ...prev, message: "Erreur serveur." }));
+      });
+  };
+  //-----------------------------------------------------------------
+  // Create Schedule
+  //-----------------------------------------------------------------
+
+  const addSchedule = () => {
+    setaddScheduleValidationError({});
+    const errorMessage = validateScheduleInput({
+      startDate: scheduleData.startDate,
+      endDate: scheduleData.endDate,
+      startTime: scheduleData.startTime,
+      endTime: scheduleData.endTime,
+      devices: scheduleData.devices,
+      repeatType: scheduleData.repeatType,
+    });
+    if (errorMessage) {
+      setaddScheduleValidationError((prev) => ({
+        ...prev,
+        message: errorMessage,
+      }));
+      setTimeout(() => {
+        setaddScheduleValidationError({});
+      }, 3000);
+      return;
+    }
+    fetch("http://localhost:8000/add-schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: scheduleData.title,
+        playlistId: scheduleData.playlist.playlistId,
+        deviceIdsRaw: scheduleData.devices?.map((dev) => dev.deviceId),
+        startDate: mergeDateAndTime(
+          scheduleData.startDate,
+          scheduleData.startTime,
+          scheduleData.repeatType,
+        ).toISOString(),
+        endDate: mergeDateAndTime(
+          scheduleData.endDate,
+          scheduleData.endTime,
+          scheduleData.repeatType,
+        ).toISOString(),
+        priority: 1,
+        repeatType: scheduleData.repeatType,
+        isActive: true,
+        sessionId: userInfo?.sessionId,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("data from adding schedule", data);
+        if (!data.success) {
+          setaddScheduleValidationError(data);
+          return;
+        }
+        setAddScheduleValidationSuccess(data);
+        setTimeout(() => {
+          setAddScheduleValidationSuccess({});
+          onClose();
+        }, 5000);
+      })
+      .catch(() => {
+        setaddScheduleValidationError((prev) => ({
+          ...prev,
+          message: "Erreur serveur.",
+        }));
+      });
+  };
+
 
   //-----------------------------------------------------------------------
-  // Charger les schedules
+  // get Schedules
   //-----------------------------------------------------------------------
   useEffect(() => {
     if (!userInfo?.sessionId) return;
@@ -97,10 +299,10 @@ export default function Main() {
   //-----------------------------------------------------------------------
   // Ajouter un nouveau
   //-----------------------------------------------------------------------
-  const addSchedule = useCallback(() => {
+  const showAddScheduleDialog = useCallback(() => {
     if (!userInfo?.privileges.contents)
       return setErrorMsg("Vous n'avez pas les droits nécessaires");
-    setEditSchedule(null);
+    setStep(1);
     setOpenCreate(true);
   }, [userInfo?.privileges.contents, setErrorMsg]);
 
@@ -108,8 +310,6 @@ export default function Main() {
   // Modifier un existant
   //-----------------------------------------------------------------------
   const editExistingSchedule = (schedule: ISchedule) => {
-    console.log("edit ", schedule);
-    setEditSchedule(schedule);
     setOpenCreate(true);
   };
 
@@ -179,7 +379,11 @@ export default function Main() {
           }
         />
 
-        <Button variant="contained" size="small" onClick={addSchedule}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={showAddScheduleDialog}
+        >
           Nouveau Schedule
         </Button>
       </div>
@@ -222,26 +426,17 @@ export default function Main() {
         playlists={playlists}
         devices={devices}
         open={openCreate}
-        onClose={() => setOpenCreate(false)}
-        editSchedule={editSchedule}
-        onSave={(schedule: ISchedule) => {
-          setSchedule(schedule);
-          if (editSchedule) {
-            setSchedules((prev) =>
-              prev.map((s) =>
-                s.scheduleId === editSchedule.scheduleId
-                  ? { ...schedule, scheduleId: editSchedule.scheduleId }
-                  : s,
-              ),
-            );
-          } else {
-            setSchedules((prev) => [
-              ...prev,
-              { ...schedule, scheduleId: Date.now() },
-            ]);
-          }
-          setEditSchedule(null);
-        }}
+        onClose={onClose}
+        scheduleData={scheduleData}
+        setScheduleData={setScheduleData}
+        onAdd={addSchedule}
+        onValidate={validateSchedule}
+        step={step}
+        setStep={setStep}
+        validationError={validationError}
+        openValidateScheduleDialog={openValidateScheduleDialog}
+        addScheduleValidationError={addScheduleValidationError}
+        addScheduleValidationSuccess={addScheduleValidationSuccess}
       />
     </div>
   );

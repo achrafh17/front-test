@@ -17,7 +17,12 @@ import ChangesTrackerBar from "./ChangesTrackerBar";
 import PlaylistList from "./PlaylistList";
 import "../../styles/Playlists.css";
 import useRSB from "../../hooks/useRSB";
-import { IContent, IPlaylistInfo, PlaylistContent, PlaylistDevice } from "../../types/api.types";
+import {
+  IContent,
+  IPlaylistInfo,
+  PlaylistContent,
+  PlaylistDevice,
+} from "../../types/api.types";
 import PlaylistDefaultRSB from "../RightSideBars/PlaylistDefaultRSB";
 import DeletePlaylistDialog from "./DeletePlaylistDialog";
 import useStore from "../../store/store";
@@ -25,13 +30,13 @@ import useStore from "../../store/store";
 export default function Main() {
   const { userInfo } = useAuth();
 
-  const setErrorMsg = useStore(state => state.setErrorMsg)
+  const setErrorMsg = useStore((state) => state.setErrorMsg);
 
   const [open, setOpen] = useState(false);
   const [showAllPlaylistContents, setShowAllPlaylistContents] = useState(false);
 
   const [sliderMax, sliderValue, setSliderValue] = useSliderValue();
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [playlists, setPlaylists] = useState<IPlaylistInfo[]>([]);
   const [changedIdxs, setChangedIdxs] = useState<number[]>([]);
@@ -48,11 +53,14 @@ export default function Main() {
   }, [userInfo, setErrorMsg]);
 
   const fetchPlaylists = (sessionId: string) => {
-    fetch(`https://www.powersmartscreen.com/get-playlists?sessionId=${sessionId}`)
+    fetch(
+      `https://www.powersmartscreen.com/get-playlists?sessionId=${sessionId}`,
+    )
       .then((res) => res.json())
       .then((resJson) => {
         setIsLoading(false);
         if (resJson.success) {
+          console.log("PLAYLIST LIST", resJson);
           setPlaylists(resJson.result as IPlaylistInfo[]);
         } else {
         }
@@ -85,7 +93,7 @@ export default function Main() {
   const updateContentDuration = (
     newDuration: number,
     contentIdx: number,
-    playlistIndex: number
+    playlistIndex: number,
   ) => {
     setPlaylists((old) => {
       var newPlaylists = [...old];
@@ -104,23 +112,26 @@ export default function Main() {
 
   const setNewSortedContents = (
     sortedContents: PlaylistContent[],
-    playlistIndex: number
+    playlistIndex: number,
   ) => {
     setPlaylists((old) => {
       var newPlaylists = [...old];
-      newPlaylists[playlistIndex].contents = sortedContents.map((c, idx) => ({...c, sequence: idx+1}))
+      newPlaylists[playlistIndex].contents = sortedContents.map((c, idx) => ({
+        ...c,
+        sequence: idx + 1,
+      }));
       return newPlaylists;
     });
     setChangedIdxs((old) => {
       if (old.includes(playlistIndex)) return old;
       return [...old, playlistIndex];
     });
-  }
+  };
 
   // trigger changedIds
   const addContentsToPlaylist = (
     newContents: (IContent & { linkDuration: number })[],
-    playlistIndex: number
+    playlistIndex: number,
   ) => {
     setPlaylists((old) => {
       var newPlaylists = [...old];
@@ -134,7 +145,7 @@ export default function Main() {
             sequence: len + idx + 1,
             linkId: Number.MAX_SAFE_INTEGER - idx - 1,
           };
-        })
+        }),
       );
       return newPlaylists;
     });
@@ -147,17 +158,17 @@ export default function Main() {
   // trigger changedIds
   const removeContentFromPlaylist = (
     contentIdx: number,
-    playlistIndex: number
+    playlistIndex: number,
   ) => {
-    if(userInfo?.privileges.playlists !== true) {
+    if (userInfo?.privileges.playlists !== true) {
       setErrorMsg("Vous n'avez pas les droits nécessaires");
       return;
     }
     setPlaylists((old) => {
       var newPlaylists = [...old];
-          newPlaylists[playlistIndex].contents = newPlaylists[playlistIndex].contents.filter(
-            (_c, idx) => idx !== contentIdx
-          );
+      newPlaylists[playlistIndex].contents = newPlaylists[
+        playlistIndex
+      ].contents.filter((_c, idx) => idx !== contentIdx);
       return newPlaylists;
     });
     setChangedIdxs((old) => {
@@ -169,12 +180,12 @@ export default function Main() {
   // doesn't trigger changedIds - persist
   const addDevicesToPlaylist = (
     newDevices: PlaylistDevice[],
-    playlistIndex: number
+    playlistIndex: number,
   ) => {
     setPlaylists((old) => {
       var newPlaylists = [...old];
       newPlaylists[playlistIndex].devices =
-            newPlaylists[playlistIndex].devices.concat(newDevices);
+        newPlaylists[playlistIndex].devices.concat(newDevices);
       var len = newPlaylists[playlistIndex].devices.length;
       newPlaylists[playlistIndex].numberOfScreens = len;
       return newPlaylists;
@@ -182,7 +193,7 @@ export default function Main() {
   };
 
   const handleDeletePlaylist = (playlistId: number) => {
-    if(userInfo?.privileges.playlists !== true) {
+    if (userInfo?.privileges.playlists !== true) {
       setErrorMsg("Vous n'avez pas les droits nécessaires");
       return;
     }
@@ -190,23 +201,26 @@ export default function Main() {
   };
 
   const handleDuplicatePlaylist = async (playlistId: number) => {
-    if(userInfo?.privileges.playlists !== true) {
+    if (userInfo?.privileges.playlists !== true) {
       setErrorMsg("Vous n'avez pas les droits nécessaires");
       return;
     }
     if (userInfo?.sessionId) {
       try {
-        var res = await fetch("https://www.powersmartscreen.com/duplicate-playlist", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
+        var res = await fetch(
+          "https://www.powersmartscreen.com/duplicate-playlist",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              sessionId: userInfo?.sessionId,
+              playlistId: playlistId,
+            }),
           },
-          body: JSON.stringify({
-            sessionId: userInfo?.sessionId,
-            playlistId: playlistId,
-          }),
-        });
+        );
 
         var resJson = await res.json();
 
@@ -228,7 +242,7 @@ export default function Main() {
   const saveChanges = async () => {
     setIsLoading(true);
     for (let i = 0; i < changedIdxs.length; i++) {
-      let playlistInfo = playlists[changedIdxs[i]]
+      let playlistInfo = playlists[changedIdxs[i]];
       let payload = {
         sessionId: userInfo?.sessionId,
         playlistInfo: playlistInfo,
@@ -255,15 +269,12 @@ export default function Main() {
     }
   }, [userInfo?.sessionId]);
 
-
   const { setRsbVariant } = useRSB();
   useEffect(() => {
     setRsbVariant({
       name: "PLAYLIST_DEFAULT",
       renderComponent: () => (
-        <PlaylistDefaultRSB
-          addPlaylist={handleAddPlaylistPress}
-        />
+        <PlaylistDefaultRSB addPlaylist={handleAddPlaylistPress} />
       ),
     });
   }, [setRsbVariant, handleAddPlaylistPress]);
@@ -277,9 +288,9 @@ export default function Main() {
             type="text"
             placeholder="Commencer à taper pour chercher des playlists..."
             value={searchTerm}
-            onChange={e => {
-              setSearchTerm(e.target.value)
-            }} 
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+            }}
           />
         </div>
         <CustomSlider
