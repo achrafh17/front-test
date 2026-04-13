@@ -1,4 +1,4 @@
-import  { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +28,7 @@ export default function AddScheduleDialog({
   setStep,
   addScheduleValidationError,
   addScheduleValidationSuccess,
+  addScheduleValidationWarning,
 }) {
   const duration = useMemo(() => {
     const start = mergeDateAndTime(
@@ -40,17 +41,26 @@ export default function AddScheduleDialog({
       scheduleData.endTime,
       scheduleData.repeatType,
     );
+    if (!start || !end) return 0;
 
-    return Math.floor((end - start) / 60000);
-  }, [scheduleData]);
+    return Math.max(0, Math.floor((end - start) / 60000));
+  }, [
+    scheduleData.startDate,
+    scheduleData.endDate,
+    scheduleData.startTime,
+    scheduleData.endTime,
+    scheduleData.repeatType,
+  ]);
 
   const formatTime = (d) =>
-    new Date(d).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    d
+      ? new Date(d).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "--:--";
 
-  const formatDate = (d) => new Date(d).toLocaleDateString();
+  const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "--");
 
   const [showChildrens, setShowChildrens] = useState({});
   const toggleChildren = (id) => {
@@ -59,7 +69,11 @@ export default function AddScheduleDialog({
       [id]: !prev[id],
     }));
   };
-  const isValid = addScheduleValidationSuccess.type !== "WARNING";
+  const isWarning = addScheduleValidationWarning?.type === "WARNING";
+  const isValid = addScheduleValidationSuccess?.type === "SUCCESS";
+
+  console.log("from add ", addScheduleValidationWarning);
+  console.log("iswarnirgg", isWarning);
   return (
     <Dialog
       open={open && step === 3}
@@ -69,7 +83,18 @@ export default function AddScheduleDialog({
     >
       <DialogContent sx={{ p: 4 }}>
         <Collapse
-          in={Boolean(addScheduleValidationError.message)}
+          in={isValid}
+          timeout={300}
+        >
+          <Box sx={{ mt: 1 }}>
+            <Alert severity="success">
+              <AlertTitle>Succès</AlertTitle>
+              {addScheduleValidationSuccess?.message}
+            </Alert>
+          </Box>
+        </Collapse>
+        <Collapse
+          in={Boolean(addScheduleValidationError?.message)}
           timeout={300}
         >
           <Box sx={{ px: 1, mt: 1 }}>
@@ -80,27 +105,52 @@ export default function AddScheduleDialog({
           </Box>
         </Collapse>
         <Collapse
-          in={addScheduleValidationSuccess.type === "WARNING"}
+          in={addScheduleValidationWarning?.type === "WARNING"}
           timeout={300}
         >
-          <Box sx={{ mt: 1 }}>
-            <Alert severity="warning">
-              <AlertTitle>Attention</AlertTitle>
-              {addScheduleValidationSuccess?.message}
-            </Alert>
+          <Box
+            sx={{
+              mt: 2,
+              p: 2,
+              borderRadius: 3,
+              background: "linear-gradient(135deg, #fff8e1, #fff3cd)",
+              border: "1px solid #ffb74d",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                backgroundColor: "#ff9800",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                fontWeight: "bold",
+              }}
+            >
+              !
+            </Box>
+
+            <Box flex={1}>
+              <Typography fontWeight={600}>Attention nécessaire</Typography>
+
+              <Typography fontSize={13} color="text.secondary" mt={0.5}>
+                {addScheduleValidationWarning?.message}
+              </Typography>
+
+              {/* Suggestion UX */}
+              <Typography fontSize={12} mt={1} sx={{ opacity: 0.7 }}>
+                Vérifiez la durée ou la configuration de la playlist
+              </Typography>
+            </Box>
           </Box>
         </Collapse>
-        <Collapse
-          in={addScheduleValidationSuccess.type === "SUCCESS"}
-          timeout={300}
-        >
-          <Box sx={{ mt: 1 }}>
-            <Alert severity="success">
-              <AlertTitle>Succès</AlertTitle>
-              {addScheduleValidationSuccess?.message}
-            </Alert>
-          </Box>
-        </Collapse>
+
         {/* ===== HEADER ===== */}
         <Box
           sx={{
@@ -111,15 +161,15 @@ export default function AddScheduleDialog({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            background: isValid ? "#f1f8f4" : "#fff4e5",
-            border: isValid ? "1px solid #81c784" : "1px solid #ffb74d",
+            background: isWarning ? "#fff4e5 " : "#f1f8f4",
+            border: isWarning ? "1px solid #ffb74d" : " 1px solid #81c784",
           }}
         >
           <Box>
             <Typography fontWeight={600}>
-              {isValid
-                ? "Schedule prêt à être activé"
-                : "Vérification recommandée"}
+              {isWarning
+                ? "Vérification recommandée"
+                : " Schedule prêt à être activé"}
             </Typography>
 
             <Typography fontSize={12} color="text.secondary">
@@ -154,7 +204,7 @@ export default function AddScheduleDialog({
           </Typography>
 
           <Typography fontWeight={600} mt={1}>
-            {scheduleData.title}
+            {scheduleData.title || "Sans titre"}{" "}
           </Typography>
         </Paper>
 
@@ -294,7 +344,7 @@ export default function AddScheduleDialog({
               fontSize: 12,
             }}
           >
-            {Math.floor(scheduleData.playlist?.totalDuration / 60)} min
+            {Math.floor((scheduleData.playlist?.totalDuration || 0) / 60)} min
             réparties sur {scheduleData.playlist?.contents?.length} contenus
           </Box>
 
@@ -441,7 +491,12 @@ export default function AddScheduleDialog({
           Modifier
         </Button>
 
-        <Button variant="contained" onClick={onAdd}>
+        <Button
+          variant="contained"
+          onClick={onAdd}
+          disabled={Boolean(addScheduleValidationError?.message)}
+        >
+          {" "}
           Confirmer
         </Button>
       </DialogActions>

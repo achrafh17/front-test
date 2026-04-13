@@ -24,22 +24,27 @@ interface IPlaylistWithContenets extends IPlaylist {
 export interface ISchedule {
   scheduleId: number | null;
   title: string;
-  startDate?: string;
-  startTime: string;
-  endTime: string;
-  endDate?: string;
-  devices?: IDevice[];
+  startDate: Date | null;
+  startTime: Date | null;
+  endDate: Date | null;
+  endTime: Date | null;
+  devices: IDevice[];
   repeatType: string;
   playlist: IPlaylistWithContenets;
 }
-
+type ValidationState = {
+  message?: string;
+  type?: string;
+  success?: boolean;
+  code?: string;
+};
 export default function Main() {
+  const BASE_URL = "http://localhost:8000";
   const { userInfo } = useAuth();
-  const today = new Date();
   const [schedules, setSchedules] = useState<ISchedule[]>([]);
   const [openCreate, setOpenCreate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [playlists, setplaylists] = useState([]);
+  const [playlists, setplaylists] = useState<IPlaylist[]>([]);
   const [devices, setDevices] = useState<IDevice[]>([]);
 
   const setErrorMsg = useStore((state) => state.setErrorMsg);
@@ -60,21 +65,33 @@ export default function Main() {
 
   const { setRsbVariant } = useRSB();
   const [step, setStep] = useState(1);
-  const [validationError, setValidationError] = useState({});
+  const [validationError, setValidationError] = useState<ValidationState>({});
   const [openValidateScheduleDialog, setOpenValidateScheduleDialog] =
     useState(false);
-  const [addScheduleValidationError, setaddScheduleValidationError] = useState(
-    {},
-  );
+  const [addScheduleValidationError, setaddScheduleValidationError] =
+    useState<ValidationState>({});
   const [addScheduleValidationSuccess, setAddScheduleValidationSuccess] =
-    useState({});
+    useState<ValidationState>({ type: "",
+      message: "",
+      code: "",});
+  const [addScheduleValidationWarning, setaddScheduleValidationWarning] =
+    useState<ValidationState>({
+      type: "",
+      message: "",
+      code: "",
+    });
+
+  const startTimeInitialValue = new Date();
+  startTimeInitialValue.setHours(8, 0, 0, 0);
+  const endTimeInitialValue = new Date();
+  endTimeInitialValue.setHours(18, 0, 0, 0);
   const [scheduleData, setScheduleData] = useState<ISchedule>({
     scheduleId: null,
     title: "",
-    startDate: "",
-    startTime: "",
-    endDate: "",
-    endTime: "",
+    startDate: new Date(),
+    startTime: startTimeInitialValue,
+    endDate: new Date(),
+    endTime: endTimeInitialValue,
     repeatType: "none",
     playlist: {
       contents: [],
@@ -94,16 +111,12 @@ export default function Main() {
   const onClose = () => {
     //  @ts-ignore
     setScheduleData((prev) => {
-      const s = new Date();
-      s.setHours(8, 0, 0, 0);
-      const e = new Date();
-      e.setHours(18, 0, 0, 0);
       return {
         ...prev,
-        startDate: today,
-        endDate: today,
-        startTime: s,
-        endTime: e,
+        startDate: new Date(),
+        endDate: new Date(),
+        startTime: startTimeInitialValue,
+        endTime: endTimeInitialValue,
         repeatType: "none",
         devices: [],
         title: "",
@@ -119,67 +132,86 @@ export default function Main() {
       };
     });
     setOpenCreate(false);
-    setStep(0);
+    setStep(1);
   };
+  const buildSchedulePayload = (schedule: ISchedule) => {
+    const errorMessage = validateScheduleInput({
+      startDate: schedule.startDate,
+      endDate: schedule.endDate,
+      startTime: schedule.startTime,
+      endTime: schedule.endTime,
+      devices: schedule.devices,
+      repeatType: schedule.repeatType,
+    });
+
+    if (errorMessage) {
+      return { errorMessage: errorMessage };
+    }
+
+    const start = mergeDateAndTime(
+      schedule.startDate,
+      schedule.startTime,
+      schedule.repeatType,
+    );
+
+    const end = mergeDateAndTime(
+      schedule.endDate,
+      schedule.endTime,
+      schedule.repeatType,
+    );
+
+    if (!start || !end) {
+      return { errorMessage: "Dates invalides" };
+    }
+
+    return {
+      data: {
+        title: schedule.title,
+        playlistId: schedule.playlist.playlistId,
+        deviceIdsRaw: schedule.devices.map((dev) => dev.deviceId),
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        priority: 1,
+        repeatType: schedule.repeatType,
+        isActive: true,
+        sessionId: userInfo?.sessionId,
+      },
+    };
+  };
+
   //----------------------------------------------------------------
   // Validate Schedule
   //----------------------------------------------------------------
- 
+
   const validateSchedule = () => {
     setValidationError({});
-    setAddScheduleValidationSuccess({})
-    const errorMessage = validateScheduleInput({
-      startDate: scheduleData.startDate,
-      endDate: scheduleData.endDate,
-      startTime: scheduleData.startTime,
-      endTime: scheduleData.endTime,
-      devices: scheduleData.devices,
-      repeatType: scheduleData.repeatType,
-    });
-    if (errorMessage) {
-      setValidationError((prev) => ({ ...prev, message: errorMessage }));
-      setTimeout(() => {
-        setValidationError({});
-      }, 3000);
+    setaddScheduleValidationWarning((prev) => ({
+      ...prev,
+      type: "",
+      code: "",
+      messgae: "",
+    }));
+    const result = buildSchedulePayload(scheduleData);
+    if (result.errorMessage) {
+      setValidationError((prev) => ({ ...prev, message: result.errorMessage }));
       return;
     }
 
-    fetch("http://localhost:8000/validate-schedule", {
+    fetch(`${BASE_URL}/validate-schedule`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: scheduleData.title,
-        playlistId: scheduleData.playlist.playlistId,
-        deviceIdsRaw: scheduleData.devices?.map((dev) => dev.deviceId),
-        startDate: mergeDateAndTime(
-          scheduleData.startDate,
-          scheduleData.startTime,
-          scheduleData.repeatType,
-        ).toISOString(),
-        endDate: mergeDateAndTime(
-          scheduleData.endDate,
-          scheduleData.endTime,
-          scheduleData.repeatType,
-        ).toISOString(),
-        priority: 1,
-        repeatType: scheduleData.repeatType,
-        isActive: true,
-        sessionId: userInfo?.sessionId,
-      }),
+      body: JSON.stringify(result.data),
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log("from validate schedule", data);
         if (!data.success) {
           setValidationError(data);
-          setTimeout(() => {
-            setValidationError({});
-          }, 3000);
           return;
         }
         if (data.type === "WARNING") {
-          setAddScheduleValidationSuccess(data);
+          setaddScheduleValidationWarning(data);
         }
-
         setStep(3);
         setOpenValidateScheduleDialog(true);
       })
@@ -193,46 +225,24 @@ export default function Main() {
 
   const addSchedule = () => {
     setaddScheduleValidationError({});
-    const errorMessage = validateScheduleInput({
-      startDate: scheduleData.startDate,
-      endDate: scheduleData.endDate,
-      startTime: scheduleData.startTime,
-      endTime: scheduleData.endTime,
-      devices: scheduleData.devices,
-      repeatType: scheduleData.repeatType,
-    });
-    if (errorMessage) {
+    setAddScheduleValidationSuccess((prev) => ({
+      ...prev,
+      type: "",
+      message: "",
+      code: "",
+    }));
+    const result = buildSchedulePayload(scheduleData);
+    if (result.errorMessage) {
       setaddScheduleValidationError((prev) => ({
         ...prev,
-        message: errorMessage,
+        message: result.errorMessage,
       }));
-      setTimeout(() => {
-        setaddScheduleValidationError({});
-      }, 3000);
       return;
     }
-    fetch("http://localhost:8000/add-schedule", {
+    fetch(`${BASE_URL}/add-schedule`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: scheduleData.title,
-        playlistId: scheduleData.playlist.playlistId,
-        deviceIdsRaw: scheduleData.devices?.map((dev) => dev.deviceId),
-        startDate: mergeDateAndTime(
-          scheduleData.startDate,
-          scheduleData.startTime,
-          scheduleData.repeatType,
-        ).toISOString(),
-        endDate: mergeDateAndTime(
-          scheduleData.endDate,
-          scheduleData.endTime,
-          scheduleData.repeatType,
-        ).toISOString(),
-        priority: 1,
-        repeatType: scheduleData.repeatType,
-        isActive: true,
-        sessionId: userInfo?.sessionId,
-      }),
+      body: JSON.stringify(result.data),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -243,9 +253,8 @@ export default function Main() {
         }
         setAddScheduleValidationSuccess(data);
         setTimeout(() => {
-          setAddScheduleValidationSuccess({});
           onClose();
-        }, 5000);
+        }, 2000);
       })
       .catch(() => {
         setaddScheduleValidationError((prev) => ({
@@ -255,7 +264,6 @@ export default function Main() {
       });
   };
 
-
   //-----------------------------------------------------------------------
   // get Schedules
   //-----------------------------------------------------------------------
@@ -263,7 +271,7 @@ export default function Main() {
     if (!userInfo?.sessionId) return;
     setIsLoading(true);
     fetch(
-      `http://localhost:8000/get-schedules?sessionId=${userInfo.sessionId}&filterBy=${filterBy}`,
+      `${BASE_URL}/get-schedules?sessionId=${userInfo.sessionId}&filterBy=${filterBy}`,
     )
       .then((res) => res.json())
       .then((json) => {
@@ -282,7 +290,7 @@ export default function Main() {
         setplaylists(data.result);
         console.log(data);
       });
-  }, []);
+  }, [userInfo?.sessionId]);
   //------------------------get Devices--------------------------------------
   useEffect(() => {
     fetch(
@@ -294,7 +302,7 @@ export default function Main() {
 
         console.log("get devices", data);
       });
-  }, []);
+  }, [userInfo?.sessionId]);
 
   //-----------------------------------------------------------------------
   // Ajouter un nouveau
@@ -318,14 +326,11 @@ export default function Main() {
   //-----------------------------------------------------------------------
   const deleteSchedule = (id: number) => {
     setSchedules((prev) => prev.filter((s) => s.scheduleId !== id));
-    fetch(
-      `http://localhost:8000/delete-schedule?sessionId=${userInfo?.sessionId}`,
-      {
-        method: "DELETE",
-        headers: { "content-Type": "application/json" },
-        body: JSON.stringify({ scheduleId: id }),
-      },
-    )
+    fetch(`${BASE_URL}/delete-schedule?sessionId=${userInfo?.sessionId}`, {
+      method: "DELETE",
+      headers: { "content-Type": "application/json" },
+      body: JSON.stringify({ scheduleId: id }),
+    })
       .then((res) => res.json())
       .then((data) => {
         console.log(data);
@@ -437,6 +442,8 @@ export default function Main() {
         openValidateScheduleDialog={openValidateScheduleDialog}
         addScheduleValidationError={addScheduleValidationError}
         addScheduleValidationSuccess={addScheduleValidationSuccess}
+        setValidationError={setValidationError}
+        addScheduleValidationWarning={addScheduleValidationWarning}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -49,6 +49,8 @@ export default function CreateScheduleDialog({
   openValidateScheduleDialog,
   addScheduleValidationError,
   addScheduleValidationSuccess,
+  setValidationError,
+  addScheduleValidationWarning,
 }) {
   const devicesExamples = [
     {
@@ -172,21 +174,12 @@ export default function CreateScheduleDialog({
   const ITEMS_PER_PAGE = 6;
   const startPage = (page - 1) * ITEMS_PER_PAGE;
   const endPage = startPage + ITEMS_PER_PAGE;
-  const totalPages = Math.max(
-    1,
-    Math.ceil((devices.length || 0) / ITEMS_PER_PAGE),
-  );
+  const totalPages = Math.max(1, Math.ceil(devices.length / ITEMS_PER_PAGE));
 
   const devicesToShow = devices.slice(startPage, endPage);
-  const handleClose = () => {
-    setScheduleData((prev) => ({ ...prev, title: "" }));
-    setScheduleData((prev) => ({ ...prev, playlist: {} }));
-    setScheduleData((prev) => ({ ...prev, devices: [] }));
-    setStep(1);
-    setTimeline(false);
+  useEffect(() => {
     setPage(1);
-    onClose();
-  };
+  }, [devices]);
 
   return (
     <>
@@ -216,17 +209,18 @@ export default function CreateScheduleDialog({
             <InputLabel id="playlist-label">Playlist</InputLabel>
             <Select
               labelId="playlist-label"
-              value={scheduleData.playlist}
+              value={scheduleData.playlist.playlistId}
               label="Playlist"
-              onChange={(e) =>
-                setScheduleData((prev) => ({
-                  ...prev,
-                  playlist: e.target.value,
-                }))
-              }
+              onChange={(e) => {
+                const selected = playlists.find(
+                  (playlist) => playlist.playlistId === e.target.value,
+                );
+                if (!selected) return;
+                setScheduleData((prev) => ({ ...prev, playlist: selected }));
+              }}
             >
               {playlists.map((p) => (
-                <MenuItem key={p.playlistId} value={p}>
+                <MenuItem key={p.playlistId} value={p.playlistId}>
                   {p.name}
                 </MenuItem>
               ))}
@@ -261,7 +255,10 @@ export default function CreateScheduleDialog({
                 variant="text"
                 sx={{ textTransform: "none", fontSize: 12 }}
                 onClick={() => {
-                  setScheduleData((prev) => ({ ...prev, devices: devices }));
+                  setScheduleData((prev) => ({
+                    ...prev,
+                    devices: [...devices],
+                  }));
                 }}
               >
                 Tout sélectionner
@@ -279,7 +276,7 @@ export default function CreateScheduleDialog({
                 Tout désélectionner
               </Button>
               <Typography variant="caption" color="text.secondary">
-                {scheduleData.devices?.length} sélectionné(s)
+                {scheduleData.devices.length} sélectionné(s)
               </Typography>
             </Box>
 
@@ -294,16 +291,20 @@ export default function CreateScheduleDialog({
                   <Grid item xs={12} sm={6} key={d.deviceId}>
                     <Paper
                       onClick={() => {
-                        setScheduleData((prev) => ({
-                          ...prev,
-                          devices: prev.devices.some(
+                        setScheduleData((prev) => {
+                          const exists = prev.devices.some(
                             (device) => device.deviceId === d.deviceId,
-                          )
-                            ? prev.devices.filter(
-                                (device) => device.deviceId !== d.deviceId,
-                              )
-                            : [...prev.devices, d],
-                        }));
+                          );
+
+                          return {
+                            ...prev,
+                            devices: exists
+                              ? prev.devices.filter(
+                                  (device) => device.deviceId !== d.deviceId,
+                                )
+                              : [...prev.devices, d],
+                          };
+                        });
                       }}
                       sx={{
                         px: 2,
@@ -407,7 +408,7 @@ export default function CreateScheduleDialog({
             variant="contained"
             disabled={
               !scheduleData.title ||
-              !scheduleData.playlist ||
+              !scheduleData.playlist.playlistId ||
               scheduleData.devices.length === 0
             }
             onClick={() => {
@@ -430,9 +431,11 @@ export default function CreateScheduleDialog({
         step={step}
         setStep={setStep}
         validationError={validationError}
+        setValidationError={setValidationError}
         openValidateScheduleDialog={openValidateScheduleDialog}
         addScheduleValidationError={addScheduleValidationError}
         addScheduleValidationSuccess={addScheduleValidationSuccess}
+        addScheduleValidationWarning={addScheduleValidationWarning}
       />
     </>
   );

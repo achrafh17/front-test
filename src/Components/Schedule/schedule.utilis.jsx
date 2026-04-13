@@ -12,10 +12,20 @@ export function LabelWithIcon({ icon: Icon, text, required }) {
 }
 
 export function mergeDateAndTime(date, time, repeatType) {
-  if(!date||!time||!repeatType) return new Date()
-  const d = repeatType === "daily" ? new Date(0) : new Date(date);
-  d.setHours(time.getHours(), time.getMinutes(), time.getSeconds(), 0);
-  return d;
+  if (!date || !time) return null;
+  if (!(date instanceof Date) || !(time instanceof Date)) return null;
+  const baseDate =
+    repeatType === "daily"
+      ? new Date(0) 
+      : new Date(date);
+
+  baseDate.setHours(
+    time.getHours(),
+    time.getMinutes(),
+    time.getSeconds(),
+    0
+  );
+  return baseDate;
 }
 export const validateScheduleInput = ({
   startDate,

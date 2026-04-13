@@ -2,8 +2,10 @@ import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import Collapse from "@mui/material/Collapse";
 import { Box } from "@mui/material";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 
-export default function FormFeedback({ error, validation }) {
+export default function FormFeedback({ error, validation, onClose }) {
   return (
     <>
       <Collapse in={Boolean(error.type || error.message)} timeout={300}>
@@ -18,8 +20,21 @@ export default function FormFeedback({ error, validation }) {
               background: "linear-gradient(180deg, #fff7f7 0%, #ffffff 100%)",
               boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
               p: 2,
+              position: "relative", // ✅ THIS IS THE KEY
             }}
           >
+            <IconButton
+              size="small"
+              onClick={onClose}
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                color: "error.main",
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
             <Box
               sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
             >

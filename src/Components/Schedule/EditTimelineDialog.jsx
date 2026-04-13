@@ -13,6 +13,7 @@ import {
   MenuItem,
   Divider,
 } from "@mui/material";
+import { IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -37,33 +38,42 @@ export default function EditTimelineDialog({
   openValidateScheduleDialog,
   addScheduleValidationError,
   addScheduleValidationSuccess,
+  setValidationError,addScheduleValidationWarning
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   useEffect(() => {
     setScheduleData((prev) => {
+      if (prev.startDate && prev.startTime) return prev;
+
       const s = new Date();
       s.setHours(8, 0, 0, 0);
 
       const e = new Date();
-      e.setHours(18, 0, 0, 10);
+      e.setHours(18, 0, 0, 0);
+
       return {
         ...prev,
-        startDate: today,
-        endDate: today,
+        startDate: new Date(),
+        endDate: new Date(),
         startTime: s,
         endTime: e,
       };
     });
-    return () => {};
   }, []);
+  const updateField = (field, value) => {
+    setScheduleData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   return (
     <>
       <Dialog
         open={open && step === 2}
-        onClose={() => setStep(1)}
+        onClose={onClose}
         fullWidth
         maxWidth="sm"
         PaperProps={{
@@ -72,8 +82,6 @@ export default function EditTimelineDialog({
           },
         }}
       >
-        {/* -----------------ALERT AND VALIDATION------------------------- */}
-        <FormFeedback error={validationError} validation={""} />
         <Box
           sx={{
             display: "flex",
@@ -83,9 +91,16 @@ export default function EditTimelineDialog({
           }}
         >
           <DialogTitle sx={{ p: 0 }}>ÉTABLIR LE CALENDRIER</DialogTitle>
-          <CloseIcon sx={{ cursor: "pointer" }} onClick={onClose} />
+          <IconButton onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
         </Box>
-
+        {/* -----------------ALERT AND VALIDATION------------------------- */}
+        <FormFeedback
+          error={validationError}
+          validation={""}
+          onClose={() => setValidationError({})}
+        />
         <DialogContent sx={{ px: 3, overflow: "visible" }}>
           <FormControl fullWidth size="small">
             <FormLabel sx={{ mb: 1 }}>
@@ -94,12 +109,7 @@ export default function EditTimelineDialog({
 
             <Select
               value={scheduleData.repeatType}
-              onChange={(e) =>
-                setScheduleData((prev) => ({
-                  ...prev,
-                  repeatType: e.target.value,
-                }))
-              }
+              onChange={(e) => updateField("repeatType", e.target.value)}
             >
               <MenuItem value="none">Aucune</MenuItem>
               <MenuItem value="daily">Quotidienne</MenuItem>
@@ -131,10 +141,7 @@ export default function EditTimelineDialog({
                   value={scheduleData.startDate}
                   minDate={today}
                   onChange={(value) => {
-                    setScheduleData((prev) => ({
-                      ...prev,
-                      startDate: value,
-                    }));
+                    updateField("startDate", value);
                   }}
                   dropdownType="popover"
                   withinPortal={false}
@@ -156,10 +163,12 @@ export default function EditTimelineDialog({
                   }
                   value={scheduleData.startTime}
                   onChange={(value) => {
-                    setScheduleData((prev) => ({
-                      ...prev,
-                      startTime: value,
-                    }));
+                    updateField(
+                      "startTime",
+                      value instanceof Date
+                        ? value
+                        : new Date(`1970-01-01T${value}`),
+                    );
                   }}
                   withSeconds
                   size="sm"
@@ -181,10 +190,7 @@ export default function EditTimelineDialog({
                     value={scheduleData.endDate}
                     minDate={scheduleData.startDate}
                     onChange={(value) => {
-                      setScheduleData((prev) => ({
-                        ...prev,
-                        endDate: value,
-                      }));
+                      updateField("endDate", value);
                     }}
                     size="sm"
                     dropdownType="popover"
@@ -203,10 +209,7 @@ export default function EditTimelineDialog({
                     }
                     value={scheduleData.endTime}
                     onChange={(value) => {
-                      setScheduleData((prev) => ({
-                        ...prev,
-                        endTime: value,
-                      }));
+                      updateField("endTime", value);
                     }}
                     withSeconds
                     size="sm"
@@ -230,10 +233,7 @@ export default function EditTimelineDialog({
                   }
                   value={scheduleData.startTime}
                   onChange={(value) => {
-                    setScheduleData((prev) => ({
-                      ...prev,
-                      startTime: value,
-                    }));
+                    updateField("startTime", value);
                   }}
                   withSeconds
                   size="sm"
@@ -253,10 +253,7 @@ export default function EditTimelineDialog({
                   }
                   value={scheduleData.endTime}
                   onChange={(value) => {
-                    setScheduleData((prev) => ({
-                      ...prev,
-                      endTime: value,
-                    }));
+                    updateField("endTime", value);
                   }}
                   withSeconds
                   size="sm"
@@ -280,9 +277,11 @@ export default function EditTimelineDialog({
         open={openValidateScheduleDialog}
         onAdd={onAdd}
         step={step}
+        setStep={setStep}
         scheduleData={scheduleData}
         addScheduleValidationError={addScheduleValidationError}
         addScheduleValidationSuccess={addScheduleValidationSuccess}
+        addScheduleValidationWarning={addScheduleValidationWarning}
       />
     </>
   );
