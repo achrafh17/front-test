@@ -50,7 +50,7 @@ export default function CreateScheduleDialog({
   addScheduleValidationError,
   addScheduleValidationSuccess,
   setValidationError,
-  addScheduleValidationWarning,
+  addScheduleValidationWarning,isSubmitting
 }) {
   const devicesExamples = [
     {
@@ -436,6 +436,7 @@ export default function CreateScheduleDialog({
         addScheduleValidationError={addScheduleValidationError}
         addScheduleValidationSuccess={addScheduleValidationSuccess}
         addScheduleValidationWarning={addScheduleValidationWarning}
+        isSubmitting={isSubmitting}
       />
     </>
   );

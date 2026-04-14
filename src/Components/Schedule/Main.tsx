@@ -16,36 +16,22 @@ import useStore from "../../store/store";
 import CreateScheduleDialog from "./CreateScheduleDialog";
 import { Grid } from "@mui/material";
 import { Select, MenuItem, FormControl } from "@mui/material";
-import { IContent, IDevice, IPlaylist } from "../../types/api.types";
+import { ISchedule, ValidationState } from "../../types/api.types";
 import { mergeDateAndTime, validateScheduleInput } from "./schedule.utilis";
-interface IPlaylistWithContenets extends IPlaylist {
-  contents: IContent[];
-}
-export interface ISchedule {
-  scheduleId: number | null;
-  title: string;
-  startDate: Date | null;
-  startTime: Date | null;
-  endDate: Date | null;
-  endTime: Date | null;
-  devices: IDevice[];
-  repeatType: string;
-  playlist: IPlaylistWithContenets;
-}
-type ValidationState = {
-  message?: string;
-  type?: string;
-  success?: boolean;
-  code?: string;
-};
+import {
+  buildSchedulePayload,
+  createScheduleAPI,
+  deleteScheduleAPI,
+  validateScheduleAPI,
+} from "./scheduleService";
+import { useSchedules } from "./useSchedules";
+import { usePlaylists } from "./usePlaylists";
+import { useDevices } from "./useDevices";
+
 export default function Main() {
-  const BASE_URL = "http://localhost:8000";
   const { userInfo } = useAuth();
-  const [schedules, setSchedules] = useState<ISchedule[]>([]);
+
   const [openCreate, setOpenCreate] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [playlists, setplaylists] = useState<IPlaylist[]>([]);
-  const [devices, setDevices] = useState<IDevice[]>([]);
 
   const setErrorMsg = useStore((state) => state.setErrorMsg);
   const [sliderMax, sliderValue, setSliderValue] = useSliderValue();
@@ -62,24 +48,33 @@ export default function Main() {
     | "createdDateAsc"
     | "createdDateDesc"
   >("startDateAsc");
-
+  const { schedules, setSchedules, isLoading } = useSchedules(
+    userInfo?.sessionId || "",
+    filterBy,
+    [openCreate, deleteTrigger],
+  );
+  const { playlists } = usePlaylists(userInfo?.sessionId || "");
+  const { devices } = useDevices(userInfo?.sessionId || "");
   const { setRsbVariant } = useRSB();
   const [step, setStep] = useState(1);
-  const [validationError, setValidationError] = useState<ValidationState>({});
+  const [validationError, setValidationError] = useState<ValidationState>({
+    type: "",
+    message: "",
+    code: "",
+  });
   const [openValidateScheduleDialog, setOpenValidateScheduleDialog] =
     useState(false);
   const [addScheduleValidationError, setaddScheduleValidationError] =
-    useState<ValidationState>({});
+    useState<ValidationState>({ type: "", message: "", code: "" });
   const [addScheduleValidationSuccess, setAddScheduleValidationSuccess] =
-    useState<ValidationState>({ type: "",
-      message: "",
-      code: "",});
+    useState<ValidationState>({ type: "", message: "", code: "" });
   const [addScheduleValidationWarning, setaddScheduleValidationWarning] =
     useState<ValidationState>({
       type: "",
       message: "",
       code: "",
     });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const startTimeInitialValue = new Date();
   startTimeInitialValue.setHours(8, 0, 0, 0);
@@ -105,8 +100,17 @@ export default function Main() {
     devices: [],
   });
   useEffect(() => {
-    setValidationError({});
-    setaddScheduleValidationError({});
+    setValidationError((prev) => ({
+      ...prev,
+      type: "",
+      code: "",
+      message: "",
+    }));
+    setaddScheduleValidationError({
+      type: "",
+      code: "",
+      message: "",
+    });
   }, [step]);
   const onClose = () => {
     //  @ts-ignore
@@ -134,175 +138,104 @@ export default function Main() {
     setOpenCreate(false);
     setStep(1);
   };
-  const buildSchedulePayload = (schedule: ISchedule) => {
-    const errorMessage = validateScheduleInput({
-      startDate: schedule.startDate,
-      endDate: schedule.endDate,
-      startTime: schedule.startTime,
-      endTime: schedule.endTime,
-      devices: schedule.devices,
-      repeatType: schedule.repeatType,
-    });
-
-    if (errorMessage) {
-      return { errorMessage: errorMessage };
-    }
-
-    const start = mergeDateAndTime(
-      schedule.startDate,
-      schedule.startTime,
-      schedule.repeatType,
-    );
-
-    const end = mergeDateAndTime(
-      schedule.endDate,
-      schedule.endTime,
-      schedule.repeatType,
-    );
-
-    if (!start || !end) {
-      return { errorMessage: "Dates invalides" };
-    }
-
-    return {
-      data: {
-        title: schedule.title,
-        playlistId: schedule.playlist.playlistId,
-        deviceIdsRaw: schedule.devices.map((dev) => dev.deviceId),
-        startDate: start.toISOString(),
-        endDate: end.toISOString(),
-        priority: 1,
-        repeatType: schedule.repeatType,
-        isActive: true,
-        sessionId: userInfo?.sessionId,
-      },
-    };
-  };
 
   //----------------------------------------------------------------
   // Validate Schedule
   //----------------------------------------------------------------
 
-  const validateSchedule = () => {
-    setValidationError({});
-    setaddScheduleValidationWarning((prev) => ({
-      ...prev,
-      type: "",
-      code: "",
-      messgae: "",
-    }));
-    const result = buildSchedulePayload(scheduleData);
+  const validateSchedule = async () => {
+    setValidationError({ type: "", code: "", message: "" });
+    setaddScheduleValidationWarning({ type: "", code: "", message: "" });
+
+    const result = buildSchedulePayload(
+      scheduleData,
+      userInfo?.sessionId || "",
+    );
+
     if (result.errorMessage) {
-      setValidationError((prev) => ({ ...prev, message: result.errorMessage }));
+      setValidationError({ message: result.errorMessage });
       return;
     }
+    console.log("PAYLOAD SENT:", result.data);
+    try {
+      const data = await validateScheduleAPI(result.data);
 
-    fetch(`${BASE_URL}/validate-schedule`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(result.data),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("from validate schedule", data);
-        if (!data.success) {
-          setValidationError(data);
-          return;
-        }
-        if (data.type === "WARNING") {
-          setaddScheduleValidationWarning(data);
-        }
-        setStep(3);
-        setOpenValidateScheduleDialog(true);
-      })
-      .catch(() => {
-        setValidationError((prev) => ({ ...prev, message: "Erreur serveur." }));
+      if (!data.success) {
+        setValidationError(data);
+        return;
+      }
+
+      if (data.type === "WARNING") {
+        setaddScheduleValidationWarning(data);
+      }
+
+      setStep(3);
+      setOpenValidateScheduleDialog(true);
+    } catch (error) {
+      console.error("error from validate schedule", error);
+      setValidationError({
+        type: "ERROR",
+        message: "Erreur serveur.",
       });
+    }
   };
   //-----------------------------------------------------------------
   // Create Schedule
   //-----------------------------------------------------------------
 
-  const addSchedule = () => {
-    setaddScheduleValidationError({});
-    setAddScheduleValidationSuccess((prev) => ({
-      ...prev,
+  const addSchedule = async () => {
+    setIsSubmitting(true);
+    setaddScheduleValidationError({
+      type: "",
+      code: "",
+      message: "",
+    });
+    setAddScheduleValidationSuccess({
       type: "",
       message: "",
       code: "",
-    }));
-    const result = buildSchedulePayload(scheduleData);
+    });
+    const result = buildSchedulePayload(
+      scheduleData,
+      userInfo?.sessionId || "",
+    );
     if (result.errorMessage) {
       setaddScheduleValidationError((prev) => ({
         ...prev,
+        type: "ERROR",
         message: result.errorMessage,
       }));
+      setIsSubmitting(false);
       return;
     }
-    fetch(`${BASE_URL}/add-schedule`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(result.data),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("data from adding schedule", data);
-        if (!data.success) {
-          setaddScheduleValidationError(data);
-          return;
-        }
-        setAddScheduleValidationSuccess(data);
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      })
-      .catch(() => {
-        setaddScheduleValidationError((prev) => ({
+    try {
+      const data = await createScheduleAPI(result.data);
+      console.log("data from adding schedule", data);
+      if (!data.success) {
+        setaddScheduleValidationError(data);
+        return;
+      }
+      setAddScheduleValidationSuccess(data);
+      setTimeout(() => {
+        setAddScheduleValidationSuccess((prev) => ({
           ...prev,
-          message: "Erreur serveur.",
+          type: "",
+          message: "",
+          code: "",
         }));
+        onClose();
+      }, 2000);
+    } catch (error) {
+      console.error("Add schedule error:", error);
+
+      setaddScheduleValidationError({
+        type: "ERROR",
+        message: "Erreur serveur.",
       });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  //-----------------------------------------------------------------------
-  // get Schedules
-  //-----------------------------------------------------------------------
-  useEffect(() => {
-    if (!userInfo?.sessionId) return;
-    setIsLoading(true);
-    fetch(
-      `${BASE_URL}/get-schedules?sessionId=${userInfo.sessionId}&filterBy=${filterBy}`,
-    )
-      .then((res) => res.json())
-      .then((json) => {
-        setIsLoading(false);
-        if (json.success) setSchedules(json.result);
-      })
-      .catch(() => setIsLoading(false));
-  }, [userInfo?.sessionId, openCreate, deleteTrigger, filterBy]);
-  //----------------------get Schedules------------------------------------
-  useEffect(() => {
-    fetch(
-      `https://www.powersmartscreen.com/get-playlists?sessionId=${userInfo?.sessionId}`,
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        setplaylists(data.result);
-        console.log(data);
-      });
-  }, [userInfo?.sessionId]);
-  //------------------------get Devices--------------------------------------
-  useEffect(() => {
-    fetch(
-      `https://www.powersmartscreen.com/get-devices?sessionId=${userInfo?.sessionId}`,
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        setDevices(data.result);
-
-        console.log("get devices", data);
-      });
-  }, [userInfo?.sessionId]);
 
   //-----------------------------------------------------------------------
   // Ajouter un nouveau
@@ -324,18 +257,15 @@ export default function Main() {
   //-----------------------------------------------------------------------
   // Suppression local front
   //-----------------------------------------------------------------------
-  const deleteSchedule = (id: number) => {
-    setSchedules((prev) => prev.filter((s) => s.scheduleId !== id));
-    fetch(`${BASE_URL}/delete-schedule?sessionId=${userInfo?.sessionId}`, {
-      method: "DELETE",
-      headers: { "content-Type": "application/json" },
-      body: JSON.stringify({ scheduleId: id }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data);
-        setdeleteTrigger((prev) => !prev);
-      });
+  const deleteSchedule = async (id: number) => {
+    try {
+      setSchedules((prev) => prev.filter((s) => s.scheduleId !== id));
+      const data = await deleteScheduleAPI(id, userInfo?.sessionId || "");
+      console.log(data);
+      setdeleteTrigger((prev) => !prev);
+    } catch (error) {
+      console.error("eror from delete schedule", error);
+    }
   };
 
   //-----------------------------------------------------------------------
@@ -444,6 +374,7 @@ export default function Main() {
         addScheduleValidationSuccess={addScheduleValidationSuccess}
         setValidationError={setValidationError}
         addScheduleValidationWarning={addScheduleValidationWarning}
+        isSubmitting={isSubmitting}
       />
     </div>
   );

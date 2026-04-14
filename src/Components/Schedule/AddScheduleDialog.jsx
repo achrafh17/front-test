@@ -12,13 +12,15 @@ import {
   Divider,
   Collapse,
 } from "@mui/material";
-
 import TvIcon from "@mui/icons-material/Tv";
 import PlaylistPlayIcon from "@mui/icons-material/PlaylistPlay";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
 import { mergeDateAndTime } from "./schedule.utilis";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import ContentCutIcon from "@mui/icons-material/ContentCut";
+import CircularProgress from "@mui/material/CircularProgress";
 
 export default function AddScheduleDialog({
   open,
@@ -29,6 +31,7 @@ export default function AddScheduleDialog({
   addScheduleValidationError,
   addScheduleValidationSuccess,
   addScheduleValidationWarning,
+  isSubmitting,
 }) {
   const duration = useMemo(() => {
     const start = mergeDateAndTime(
@@ -71,9 +74,8 @@ export default function AddScheduleDialog({
   };
   const isWarning = addScheduleValidationWarning?.type === "WARNING";
   const isValid = addScheduleValidationSuccess?.type === "SUCCESS";
+  const isError = addScheduleValidationError?.type === "ERROR";
 
-  console.log("from add ", addScheduleValidationWarning);
-  console.log("iswarnirgg", isWarning);
   return (
     <Dialog
       open={open && step === 3}
@@ -82,10 +84,7 @@ export default function AddScheduleDialog({
       fullWidth
     >
       <DialogContent sx={{ p: 4 }}>
-        <Collapse
-          in={isValid}
-          timeout={300}
-        >
+        <Collapse in={isValid} timeout={300}>
           <Box sx={{ mt: 1 }}>
             <Alert severity="success">
               <AlertTitle>Succès</AlertTitle>
@@ -93,61 +92,12 @@ export default function AddScheduleDialog({
             </Alert>
           </Box>
         </Collapse>
-        <Collapse
-          in={Boolean(addScheduleValidationError?.message)}
-          timeout={300}
-        >
+        <Collapse in={isError} timeout={300}>
           <Box sx={{ px: 1, mt: 1 }}>
             <Alert severity="error">
               <AlertTitle>Erreur</AlertTitle>
               {addScheduleValidationError?.message}
             </Alert>
-          </Box>
-        </Collapse>
-        <Collapse
-          in={addScheduleValidationWarning?.type === "WARNING"}
-          timeout={300}
-        >
-          <Box
-            sx={{
-              mt: 2,
-              p: 2,
-              borderRadius: 3,
-              background: "linear-gradient(135deg, #fff8e1, #fff3cd)",
-              border: "1px solid #ffb74d",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 2,
-            }}
-          >
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                backgroundColor: "#ff9800",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                fontWeight: "bold",
-              }}
-            >
-              !
-            </Box>
-
-            <Box flex={1}>
-              <Typography fontWeight={600}>Attention nécessaire</Typography>
-
-              <Typography fontSize={13} color="text.secondary" mt={0.5}>
-                {addScheduleValidationWarning?.message}
-              </Typography>
-
-              {/* Suggestion UX */}
-              <Typography fontSize={12} mt={1} sx={{ opacity: 0.7 }}>
-                Vérifiez la durée ou la configuration de la playlist
-              </Typography>
-            </Box>
           </Box>
         </Collapse>
 
@@ -171,7 +121,19 @@ export default function AddScheduleDialog({
                 ? "Vérification recommandée"
                 : " Schedule prêt à être activé"}
             </Typography>
-
+            {isWarning && (
+              <Typography
+                fontSize={12}
+                color="text.secondary"
+                sx={{
+                  mt: 0.5,
+                  lineHeight: 1.4,
+                  opacity: 0.9,
+                }}
+              >
+                {addScheduleValidationWarning?.message}
+              </Typography>
+            )}
             <Typography fontSize={12} color="text.secondary">
               Vérifiez les informations avant confirmation
             </Typography>
@@ -321,7 +283,12 @@ export default function AddScheduleDialog({
             PLAYLIST
           </Typography>
 
-          <Box display="flex" justifyContent="space-between" mb={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            mb={1}
+          >
             <Box display="flex" alignItems="center" gap={1}>
               <PlaylistPlayIcon />
               <Typography fontWeight={600}>
@@ -333,6 +300,32 @@ export default function AddScheduleDialog({
               label={`${scheduleData.playlist?.contents?.length || 0} contenus`}
               size="small"
             />
+            {isWarning && (
+              <Box
+                sx={{
+                  p: 0.7,
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  background: "rgba(237,108,2,0.08)",
+                  border: "1px solid",
+                  borderColor: "rgba(237,108,2,0.3)",
+                }}
+              >
+                {addScheduleValidationWarning?.code === "PLAYLIST_LOOP" ? (
+                  <AutorenewIcon sx={{ fontSize: 16, color: "#ed6c02" }} />
+                ) : (
+                  <ContentCutIcon sx={{ fontSize: 16, color: "#ed6c02" }} />
+                )}
+
+                <Typography fontSize={12} sx={{ fontWeight: 500 }}>
+                  {addScheduleValidationWarning?.code === "PLAYLIST_LOOP"
+                    ? "Lecture en boucle"
+                    : "Contenu tronqué"}
+                </Typography>
+              </Box>
+            )}
           </Box>
 
           <Box
@@ -493,11 +486,11 @@ export default function AddScheduleDialog({
 
         <Button
           variant="contained"
+          color="primary"
           onClick={onAdd}
-          disabled={Boolean(addScheduleValidationError?.message)}
+          disabled={isError || isSubmitting}
         >
-          {" "}
-          Confirmer
+          {isSubmitting ? <CircularProgress size={18} /> : "Confirmer"}{" "}
         </Button>
       </DialogActions>
     </Dialog>

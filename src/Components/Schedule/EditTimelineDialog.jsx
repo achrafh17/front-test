@@ -38,7 +38,7 @@ export default function EditTimelineDialog({
   openValidateScheduleDialog,
   addScheduleValidationError,
   addScheduleValidationSuccess,
-  setValidationError,addScheduleValidationWarning
+  setValidationError,addScheduleValidationWarning,isSubmitting
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -282,6 +282,7 @@ export default function EditTimelineDialog({
         addScheduleValidationError={addScheduleValidationError}
         addScheduleValidationSuccess={addScheduleValidationSuccess}
         addScheduleValidationWarning={addScheduleValidationWarning}
+        isSubmitting={isSubmitting}
       />
     </>
   );
