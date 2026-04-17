@@ -34,10 +34,11 @@ const Divider = styled("div")({
   width: "100%",
 });
 
-export default function CreateScheduleDialog({
+export default function ScheduleDialog({
   open,
   onClose,
-  onAdd,
+  mode,
+  onSubmit,
   playlists,
   scheduleData,
   setScheduleData,
@@ -45,131 +46,12 @@ export default function CreateScheduleDialog({
   onValidate,
   step,
   setStep,
-  validationError,
-  openValidateScheduleDialog,
-  addScheduleValidationError,
-  addScheduleValidationSuccess,
-  setValidationError,
-  addScheduleValidationWarning,isSubmitting
-}) {
-  const devicesExamples = [
-    {
-      deviceId: "dev-101",
-      name: "Écran Accueil",
-      location: "Entrée magasin",
-      status: "online",
-    },
-    {
-      deviceId: "dev-102",
-      name: "Écran Vitrine",
-      location: "Vitrine principale",
-      status: "online",
-    },
-    {
-      deviceId: "dev-103",
-      name: "Écran Caisse",
-      location: "Zone caisse",
-      status: "offline",
-    },
-    {
-      deviceId: "dev-104",
-      name: "Écran Restaurant",
-      location: "Salle principale",
-      status: "online",
-    },
-    {
-      deviceId: "dev-105",
-      name: "Écran Promotion",
-      location: "Rayon promotions",
-      status: "offline",
-    },
-    {
-      deviceId: "dev-106",
-      name: "Écran Étages",
-      location: "2ème étage",
-      status: "online",
-    },
-    {
-      deviceId: "dev-107",
-      name: "Écran Produits",
-      location: "Rayon produits",
-      status: "online",
-    },
-    {
-      deviceId: "dev-108",
-      name: "Écran Publicité",
-      location: "Entrée secondaire",
-      status: "online",
-    },
-    {
-      deviceId: "dev-109",
-      name: "Écran Menu",
-      location: "Zone restauration",
-      status: "offline",
-    },
-    {
-      deviceId: "dev-110",
-      name: "Écran Infos",
-      location: "Accueil clients",
-      status: "online",
-    },
-    {
-      deviceId: "dev-111",
-      name: "Écran Direction",
-      location: "Bureau direction",
-      status: "online",
-    },
-    {
-      deviceId: "dev-112",
-      name: "Écran Stock",
-      location: "Zone stockage",
-      status: "offline",
-    },
-    {
-      deviceId: "dev-113",
-      name: "Écran Couloir",
-      location: "Couloir principal",
-      status: "online",
-    },
-    {
-      deviceId: "dev-114",
-      name: "Écran Hall",
-      location: "Hall principal",
-      status: "online",
-    },
-    {
-      deviceId: "dev-115",
-      name: "Écran Parking",
-      location: "Entrée parking",
-      status: "offline",
-    },
-    {
-      deviceId: "dev-116",
-      name: "Écran Salle Réunion",
-      location: "Salle réunion",
-      status: "online",
-    },
-    {
-      deviceId: "dev-117",
-      name: "Écran Couloir Nord",
-      location: "Couloir nord",
-      status: "online",
-    },
-    {
-      deviceId: "dev-118",
-      name: "Écran Couloir Sud",
-      location: "Couloir sud",
-      status: "offline",
-    },
-    {
-      deviceId: "dev-119",
-      name: "Écran Couloir Sud",
-      location: "Couloir sud",
-      status: "offline",
-    },
-  ];
+  validationFeedBack,
 
-  const [openTimeline, setTimeline] = useState(false);
+  feedBackFinal,
+  setValidationFeedBack,
+  isSubmitting,
+}) {
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 6;
   const startPage = (page - 1) * ITEMS_PER_PAGE;
@@ -189,7 +71,11 @@ export default function CreateScheduleDialog({
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Créer un Schedule</DialogTitle>
+        <DialogTitle>
+          {mode === "create"
+            ? "Créer un Schedule"
+            : "Modifier un schedule existant"}
+        </DialogTitle>
 
         {/* Ligne de séparation propre */}
         <Divider />
@@ -413,7 +299,6 @@ export default function CreateScheduleDialog({
             }
             onClick={() => {
               setStep(2);
-              setTimeline(true);
             }}
           >
             Suivant
@@ -422,20 +307,18 @@ export default function CreateScheduleDialog({
       </Dialog>
 
       <EditTimelineDialog
-        open={openTimeline}
+        open={step === 2}
         onClose={onClose}
-        onAdd={onAdd}
+        mode={mode}
+        onSubmit={onSubmit}
         onValidate={onValidate}
         scheduleData={scheduleData}
         setScheduleData={setScheduleData}
         step={step}
         setStep={setStep}
-        validationError={validationError}
-        setValidationError={setValidationError}
-        openValidateScheduleDialog={openValidateScheduleDialog}
-        addScheduleValidationError={addScheduleValidationError}
-        addScheduleValidationSuccess={addScheduleValidationSuccess}
-        addScheduleValidationWarning={addScheduleValidationWarning}
+        validationFeedBack={validationFeedBack}
+        setValidationFeedBack={setValidationFeedBack}
+        feedBackFinal={feedBackFinal}
         isSubmitting={isSubmitting}
       />
     </>

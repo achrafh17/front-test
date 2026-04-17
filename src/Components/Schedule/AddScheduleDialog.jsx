@@ -24,13 +24,11 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 export default function AddScheduleDialog({
   open,
-  onAdd,
+  onSubmit,
   scheduleData,
   step,
   setStep,
-  addScheduleValidationError,
-  addScheduleValidationSuccess,
-  addScheduleValidationWarning,
+  feedBackFinal,
   isSubmitting,
 }) {
   const duration = useMemo(() => {
@@ -72,9 +70,10 @@ export default function AddScheduleDialog({
       [id]: !prev[id],
     }));
   };
-  const isWarning = addScheduleValidationWarning?.type === "WARNING";
-  const isValid = addScheduleValidationSuccess?.type === "SUCCESS";
-  const isError = addScheduleValidationError?.type === "ERROR";
+  console.log("here is the feedBack", feedBackFinal);
+  const isWarning = feedBackFinal?.type === "WARNING";
+  const isValid = feedBackFinal?.type === "SUCCESS";
+  const isError = feedBackFinal?.type === "ERROR";
 
   return (
     <Dialog
@@ -88,7 +87,7 @@ export default function AddScheduleDialog({
           <Box sx={{ mt: 1 }}>
             <Alert severity="success">
               <AlertTitle>Succès</AlertTitle>
-              {addScheduleValidationSuccess?.message}
+              {feedBackFinal?.message}
             </Alert>
           </Box>
         </Collapse>
@@ -96,7 +95,7 @@ export default function AddScheduleDialog({
           <Box sx={{ px: 1, mt: 1 }}>
             <Alert severity="error">
               <AlertTitle>Erreur</AlertTitle>
-              {addScheduleValidationError?.message}
+              {feedBackFinal?.message}
             </Alert>
           </Box>
         </Collapse>
@@ -131,7 +130,7 @@ export default function AddScheduleDialog({
                   opacity: 0.9,
                 }}
               >
-                {addScheduleValidationWarning?.message}
+                {feedBackFinal?.message}
               </Typography>
             )}
             <Typography fontSize={12} color="text.secondary">
@@ -313,14 +312,14 @@ export default function AddScheduleDialog({
                   borderColor: "rgba(237,108,2,0.3)",
                 }}
               >
-                {addScheduleValidationWarning?.code === "PLAYLIST_LOOP" ? (
+                {feedBackFinal?.code === "PLAYLIST_LOOP" ? (
                   <AutorenewIcon sx={{ fontSize: 16, color: "#ed6c02" }} />
                 ) : (
                   <ContentCutIcon sx={{ fontSize: 16, color: "#ed6c02" }} />
                 )}
 
                 <Typography fontSize={12} sx={{ fontWeight: 500 }}>
-                  {addScheduleValidationWarning?.code === "PLAYLIST_LOOP"
+                  {feedBackFinal?.code === "PLAYLIST_LOOP"
                     ? "Lecture en boucle"
                     : "Contenu tronqué"}
                 </Typography>
@@ -487,8 +486,8 @@ export default function AddScheduleDialog({
         <Button
           variant="contained"
           color="primary"
-          onClick={onAdd}
-          disabled={isError || isSubmitting}
+          onClick={onSubmit}
+          disabled={isSubmitting}
         >
           {isSubmitting ? <CircularProgress size={18} /> : "Confirmer"}{" "}
         </Button>

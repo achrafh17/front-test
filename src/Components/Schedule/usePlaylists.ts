@@ -10,8 +10,10 @@ export function usePlaylists(sessionId: string) {
         const res = await fetch(
           `https://www.powersmartscreen.com/get-playlists?sessionId=${sessionId}`,
         );
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || `HTTP error ${res.status}`);
+        }
         setPlaylists(data.result);
         console.log(data);
       } catch (error) {
@@ -20,5 +22,5 @@ export function usePlaylists(sessionId: string) {
     };
     load();
   }, [sessionId]);
-  return {playlists}
+  return { playlists };
 }

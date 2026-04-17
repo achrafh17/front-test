@@ -51,7 +51,9 @@ export const buildSchedulePayload = (
       priority: 1,
       repeatType: schedule.repeatType,
       isActive: true,
-      sessionId:sessionId,
+      sessionId: sessionId,
+      //edit mode
+      scheduleId: schedule.scheduleId,
     },
   };
 };
@@ -67,9 +69,13 @@ export async function fetchSchedules(
     `${BASE_URL}/get-schedules?sessionId=${sessionId}&filterBy=${filterBy}`,
   );
 
-  if (!res.ok) throw new Error("Failed to fetch schedules");
+  const result = await res.json();
 
-  return res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Erreur serveur");
+  }
+
+  return result;
 }
 
 export async function createScheduleAPI(data: any) {
@@ -81,9 +87,13 @@ export async function createScheduleAPI(data: any) {
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error("Failed to create schedule");
+  const result = await res.json();
 
-  return res.json();
+  if (!res.ok) {
+    throw new Error(result.message || "Erreur serveur");
+  }
+
+  return result;
 }
 
 export async function validateScheduleAPI(data: any) {
@@ -95,9 +105,36 @@ export async function validateScheduleAPI(data: any) {
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error("Failed to validate schedule");
+  let result;
 
-  return res.json();
+  try {
+    result = await res.json();
+  } catch {
+    throw new Error("Réponse invalide du serveur");
+  }
+
+  if (!res.ok) {
+    throw new Error(result.message || "Erreur serveur");
+  }
+
+  return result;
+}
+export async function updateScheduleAPI(data: any) {
+  const res = await fetch(`${BASE_URL}/update-schedule`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || "Erreur serveur");
+  }
+
+  return result;
 }
 export async function deleteScheduleAPI(id: number, sessionId: string) {
   if (!sessionId) {
@@ -111,6 +148,11 @@ export async function deleteScheduleAPI(id: number, sessionId: string) {
       body: JSON.stringify({ scheduleId: id }),
     },
   );
-  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
-  return res.json();
+  const result = await res.json();
+
+  if (!res.ok) {
+    throw new Error(result.message || `HTTP error ${res.status}`);
+  }
+
+  return result;
 }

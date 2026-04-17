@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Skeleton from "@mui/material/Skeleton";
-import { ISchedule } from "./Main";
+import { ISchedule } from "../../types/api.types";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import ScheduleInfoDialog from "./ScheduleInfoDialog";
 import { Stack } from "@mui/material";
@@ -110,7 +110,8 @@ const ScheduleList: React.FC<Props> = ({
             setSelectedSchedule(null);
           }}
           onConfirm={() => {
-            if (selectedSchedule) onDelete(selectedSchedule.scheduleId);
+            if (selectedSchedule?.scheduleId)
+              onDelete(selectedSchedule.scheduleId);
             setShowConfirmDelete(false);
             setSelectedSchedule(null);
           }}

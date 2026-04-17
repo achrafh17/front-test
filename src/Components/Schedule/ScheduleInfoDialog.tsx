@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Divider from "@mui/material/Divider";
-import { ISchedule } from "./Main";
+import { ISchedule } from "../../types/api.types";
 import { IDevice } from "../../types/api.types";
 import Slide from "@mui/material/Slide";
 import { forwardRef, useState } from "react";

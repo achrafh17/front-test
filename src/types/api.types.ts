@@ -129,10 +129,10 @@ interface IPlaylistWithContenets extends IPlaylist {
 export interface ISchedule {
   scheduleId: number | null;
   title: string;
-  startDate: Date | null;
-  startTime: Date | null;
-  endDate: Date | null;
-  endTime: Date | null;
+  startDate: Date;
+  startTime: Date;
+  endDate: Date;
+  endTime: Date;
   devices: IDevice[];
   repeatType: string;
   playlist: IPlaylistWithContenets;
@@ -256,9 +256,9 @@ export interface IFormattedTwitterApiResponse {
   users: Record<string, twitterUser>;
   media?: Record<string, twitterMedia>;
 }
- export interface ValidationState  {
+export interface ValidationState {
   message?: string;
-  type?: string;
+  type?: "ERROR" | "SUCCESS" | "WARNING" |"";
   success?: boolean;
   code?: string;
-};
+}

@@ -28,22 +28,22 @@ import AddScheduleDialog from "./AddScheduleDialog";
 export default function EditTimelineDialog({
   open,
   onClose,
-  onAdd,
+  onSubmit,
+  mode,
   onValidate,
   scheduleData,
   setScheduleData,
   step,
   setStep,
-  validationError,
-  openValidateScheduleDialog,
-  addScheduleValidationError,
-  addScheduleValidationSuccess,
-  setValidationError,addScheduleValidationWarning,isSubmitting
+  validationFeedBack,
+  feedBackFinal,
+  setValidationFeedBack,
+  isSubmitting,
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   useEffect(() => {
+    if (mode === "edit") return;
     setScheduleData((prev) => {
       if (prev.startDate && prev.startTime) return prev;
 
@@ -61,7 +61,7 @@ export default function EditTimelineDialog({
         endTime: e,
       };
     });
-  }, []);
+  }, [mode]);
   const updateField = (field, value) => {
     setScheduleData((prev) => ({
       ...prev,
@@ -72,7 +72,7 @@ export default function EditTimelineDialog({
   return (
     <>
       <Dialog
-        open={open && step === 2}
+        open={open}
         onClose={onClose}
         fullWidth
         maxWidth="sm"
@@ -97,9 +97,9 @@ export default function EditTimelineDialog({
         </Box>
         {/* -----------------ALERT AND VALIDATION------------------------- */}
         <FormFeedback
-          error={validationError}
+          error={validationFeedBack}
           validation={""}
-          onClose={() => setValidationError({})}
+          onClose={() => setValidationFeedBack({})}
         />
         <DialogContent sx={{ px: 3, overflow: "visible" }}>
           <FormControl fullWidth size="small">
@@ -209,7 +209,12 @@ export default function EditTimelineDialog({
                     }
                     value={scheduleData.endTime}
                     onChange={(value) => {
-                      updateField("endTime", value);
+                      updateField(
+                        "endTime",
+                        value instanceof Date
+                          ? value
+                          : new Date(`1970-01-01T${value}`),
+                      );
                     }}
                     withSeconds
                     size="sm"
@@ -274,14 +279,12 @@ export default function EditTimelineDialog({
         </DialogActions>
       </Dialog>
       <AddScheduleDialog
-        open={openValidateScheduleDialog}
-        onAdd={onAdd}
+        open={step === 3}
+        onSubmit={onSubmit}
         step={step}
         setStep={setStep}
         scheduleData={scheduleData}
-        addScheduleValidationError={addScheduleValidationError}
-        addScheduleValidationSuccess={addScheduleValidationSuccess}
-        addScheduleValidationWarning={addScheduleValidationWarning}
+        feedBackFinal={feedBackFinal}
         isSubmitting={isSubmitting}
       />
     </>

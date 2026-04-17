@@ -10,8 +10,10 @@ export function useDevices(sessionId: string) {
         const res = await fetch(
           `https://www.powersmartscreen.com/get-devices?sessionId=${sessionId}`,
         );
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
         const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || `HTTP error ${res.status}`);
+        }
         setDevices(data.result);
 
         console.log("get devices", data);
