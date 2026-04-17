@@ -73,8 +73,6 @@ export default function Main() {
     resetForm,
   } = useScheduleForm(userInfo?.sessionId || "");
 
-  
-
   //-----------------------------------------------------------------------
   // launch create schedule
   //-----------------------------------------------------------------------
@@ -223,7 +221,12 @@ export default function Main() {
         }}
         scheduleData={scheduleData}
         setScheduleData={setScheduleData}
-        onSubmit={() => handleSubmit(() => setOpenCreate(false))}
+        onSubmit={() =>
+          handleSubmit(() => {
+            resetForm();
+            setOpenCreate(false);
+          })
+        }
         onValidate={validateSchedule}
         step={step}
         setStep={setStep}

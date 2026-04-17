@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ValidationState, ISchedule } from "../../types/api.types";
 import {
@@ -83,6 +83,14 @@ export function useScheduleForm(sessionId: string) {
     setMode("create");
     resetFeedback();
   };
+  useEffect(() => {
+    if (step === 2 && validationFeedBack.type === "ERROR") {
+      setValidationFeedBack({ type: "", message: "", code: "" });
+    }
+    if (step == 3 && feedBackFinal.type === "ERROR") {
+      setFeedBackFinal({ type: "", message: "", code: "" });
+    }
+  }, [step]);
 
   //----------------------------------------------------------------
   // Validate Schedule
@@ -108,7 +116,7 @@ export function useScheduleForm(sessionId: string) {
         return;
       }
       if (data.type === "WARNING") {
-        setFeedBackFinal(data);
+        setValidationFeedBack(data);
       }
       setStep(3);
     } catch (error) {
@@ -148,12 +156,9 @@ export function useScheduleForm(sessionId: string) {
       }
       setFeedBackFinal(data);
       setTimeout(() => {
-        setFeedBackFinal({
-          type: "",
-          message: "",
-          code: "",
-        });
+        resetFeedback();
         onClose?.();
+        console.log("hello");
       }, SUCCESS_DELAY);
     } catch (error) {
       console.error("Add schedule error:", error);
@@ -173,8 +178,24 @@ export function useScheduleForm(sessionId: string) {
   const loadScheduleForEdit = (schedule: ISchedule) => {
     setMode("edit");
     setStep(1);
+    //in update we need to pass through content
+    const playlist = {
+      //@ts-ignore
+      contents: schedule.playlist.contents.map((c) => c.content),
+      playlistId: schedule.playlist.playlistId,
+      name: schedule.playlist.name,
+      totalDuration: schedule.playlist.totalDuration,
+      numberOfScreens: schedule.playlist.numberOfScreens,
+      numberOfWidgets: schedule.playlist.numberOfWidgets,
+      userId: schedule.playlist.userId,
+    };
+
     setScheduleData({
       ...schedule,
+      //@ts-ignore
+      //in update we need to pass through device
+      devices: schedule.devices.map((d) => d.device),
+      playlist: playlist,
       startDate: new Date(schedule.startDate),
       endDate: new Date(schedule.endDate),
       startTime: new Date(schedule.startDate),

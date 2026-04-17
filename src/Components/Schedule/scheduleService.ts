@@ -109,12 +109,9 @@ export async function validateScheduleAPI(data: any) {
 
   try {
     result = await res.json();
+    console.log("here are the result", result);
   } catch {
     throw new Error("Réponse invalide du serveur");
-  }
-
-  if (!res.ok) {
-    throw new Error(result.message || "Erreur serveur");
   }
 
   return result;

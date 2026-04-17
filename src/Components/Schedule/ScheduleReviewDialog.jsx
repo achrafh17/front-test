@@ -22,14 +22,16 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import CircularProgress from "@mui/material/CircularProgress";
 
-export default function AddScheduleDialog({
+export default function ScheduleReviewDialog({
   open,
   onSubmit,
   scheduleData,
   step,
   setStep,
   feedBackFinal,
+  validationFeedBack,
   isSubmitting,
+  mode,
 }) {
   const duration = useMemo(() => {
     const start = mergeDateAndTime(
@@ -70,10 +72,9 @@ export default function AddScheduleDialog({
       [id]: !prev[id],
     }));
   };
-  console.log("here is the feedBack", feedBackFinal);
-  const isWarning = feedBackFinal?.type === "WARNING";
-  const isValid = feedBackFinal?.type === "SUCCESS";
+  const isWarning = validationFeedBack?.type === "WARNING";
   const isError = feedBackFinal?.type === "ERROR";
+  const isValid = feedBackFinal?.type === "SUCCESS";
 
   return (
     <Dialog
@@ -130,11 +131,12 @@ export default function AddScheduleDialog({
                   opacity: 0.9,
                 }}
               >
-                {feedBackFinal?.message}
+                {validationFeedBack?.message}
               </Typography>
             )}
             <Typography fontSize={12} color="text.secondary">
-              Vérifiez les informations avant confirmation
+              Vérifiez les informations avant{" "}
+              {mode === "create" ? "confirmation" : "modification"}
             </Typography>
           </Box>
 
@@ -312,14 +314,14 @@ export default function AddScheduleDialog({
                   borderColor: "rgba(237,108,2,0.3)",
                 }}
               >
-                {feedBackFinal?.code === "PLAYLIST_LOOP" ? (
+                {validationFeedBack?.code === "PLAYLIST_LOOP" ? (
                   <AutorenewIcon sx={{ fontSize: 16, color: "#ed6c02" }} />
                 ) : (
                   <ContentCutIcon sx={{ fontSize: 16, color: "#ed6c02" }} />
                 )}
 
                 <Typography fontSize={12} sx={{ fontWeight: 500 }}>
-                  {feedBackFinal?.code === "PLAYLIST_LOOP"
+                  {validationFeedBack?.code === "PLAYLIST_LOOP"
                     ? "Lecture en boucle"
                     : "Contenu tronqué"}
                 </Typography>
@@ -480,7 +482,7 @@ export default function AddScheduleDialog({
             setStep(2);
           }}
         >
-          Modifier
+          Retour
         </Button>
 
         <Button
@@ -489,7 +491,13 @@ export default function AddScheduleDialog({
           onClick={onSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting ? <CircularProgress size={18} /> : "Confirmer"}{" "}
+          {isSubmitting ? (
+            <CircularProgress size={18} />
+          ) : mode === "create" ? (
+            "Confirmer"
+          ) : (
+            "Modifier"
+          )}{" "}
         </Button>
       </DialogActions>
     </Dialog>

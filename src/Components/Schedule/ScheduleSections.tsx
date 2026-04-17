@@ -1,8 +1,8 @@
 import { Stack, Typography } from "@mui/material";
 import EventBusyIcon from "@mui/icons-material/EventBusy";
-import { ISchedule } from "./Main";
 import { useState, useEffect, useMemo } from "react";
 import ScheduleSection from "./ScheduleSection";
+import { ISchedule } from "../../types/api.types";
 type FilterBy =
   | "name"
   | "startDateAsc"

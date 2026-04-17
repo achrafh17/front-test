@@ -22,7 +22,7 @@ import { DatePicker, TimeInput } from "@mantine/dates";
 import { Text } from "@mantine/core";
 import FormFeedback from "./FormFeedback";
 import { LabelWithIcon } from "./schedule.utilis";
-import AddScheduleDialog from "./AddScheduleDialog";
+import ScheduleReviewDialog from "./ScheduleReviewDialog";
 
 /* ===================================================== */
 export default function EditTimelineDialog({
@@ -97,7 +97,7 @@ export default function EditTimelineDialog({
         </Box>
         {/* -----------------ALERT AND VALIDATION------------------------- */}
         <FormFeedback
-          error={validationFeedBack}
+          error={!validationFeedBack.success ? validationFeedBack : {}}
           validation={""}
           onClose={() => setValidationFeedBack({})}
         />
@@ -142,6 +142,7 @@ export default function EditTimelineDialog({
                   minDate={today}
                   onChange={(value) => {
                     updateField("startDate", value);
+                    updateField("endDate", value);
                   }}
                   dropdownType="popover"
                   withinPortal={false}
@@ -274,18 +275,20 @@ export default function EditTimelineDialog({
             RETOUR
           </Button>
           <Button variant="contained" onClick={onValidate}>
-            ENREGISTRER
+            VALIDER
           </Button>
         </DialogActions>
       </Dialog>
-      <AddScheduleDialog
+      <ScheduleReviewDialog
         open={step === 3}
         onSubmit={onSubmit}
         step={step}
         setStep={setStep}
         scheduleData={scheduleData}
         feedBackFinal={feedBackFinal}
+        validationFeedBack={validationFeedBack}
         isSubmitting={isSubmitting}
+        mode={mode}
       />
     </>
   );
