@@ -1,4 +1,3 @@
-// Main.tsx
 // @ts-ignore
 import { ReactComponent as SearchSvg } from "../../assets/svg/search.svg";
 import Button from "@mui/material/Button";
@@ -16,25 +15,23 @@ import useStore from "../../store/store";
 import { Grid, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { Select, MenuItem, FormControl } from "@mui/material";
-import { ISchedule, ValidationState } from "../../types/api.types";
+import { ISchedule } from "../../types/api.types";
 import Alert from "@mui/material/Alert";
 import Collapse from "@mui/material/Collapse";
 import ScheduleDialog from "./ScheduleDialog";
-import { deleteScheduleAPI } from "./scheduleService";
 import { useSchedules } from "./useSchedules";
 import { usePlaylists } from "./usePlaylists";
 import { useDevices } from "./useDevices";
 import { useScheduleForm } from "./useScheduleForm";
+import { SnackBar } from "./snackBar";
 
 export default function Main() {
   const { userInfo } = useAuth();
-
   const [openCreate, setOpenCreate] = useState(false);
   const setErrorMsg = useStore((state) => state.setErrorMsg);
   const [sliderMax, sliderValue, setSliderValue] = useSliderValue();
   const [searchTerm, setSearchTerm] = useState("");
   //a variable to refresh the schedules list after deleted schedule
-  const [deleteTrigger, setdeleteTrigger] = useState(false);
   const [statusFilter, setStatusFilter] = useState<
     "active" | "daily" | "passed"
   >("active");
@@ -48,14 +45,11 @@ export default function Main() {
   const { schedules, setSchedules, isLoading, error } = useSchedules(
     userInfo?.sessionId || "",
     filterBy,
-    [openCreate, deleteTrigger],
+    openCreate,
   );
   const { playlists } = usePlaylists(userInfo?.sessionId || "");
   const { devices } = useDevices(userInfo?.sessionId || "");
   const { setRsbVariant } = useRSB();
-
-  // feedBack hook for API add-schedule /edit -schedule
-
   const {
     scheduleData,
     setScheduleData,
@@ -65,12 +59,16 @@ export default function Main() {
     setMode,
     validationFeedBack,
     setValidationFeedBack,
-    feedBackFinal,
+    submissionFeedback,
+    setSubmissionFeedback,
     isSubmitting,
     validateSchedule,
     handleSubmit,
+    deleteSchedule,
     loadScheduleForEdit,
     resetForm,
+    showConfirmDelete,
+    setShowConfirmDelete,
   } = useScheduleForm(userInfo?.sessionId || "");
 
   //-----------------------------------------------------------------------
@@ -91,21 +89,6 @@ export default function Main() {
     resetForm();
     loadScheduleForEdit(schedule);
     setOpenCreate(true);
-  };
-
-  //-----------------------------------------------------------------------
-  // Suppression local front
-  //-----------------------------------------------------------------------
-  const deleteSchedule = async (id: number) => {
-    try {
-      if (!id) return;
-      setSchedules((prev) => prev.filter((s) => s.scheduleId !== id));
-      const data = await deleteScheduleAPI(id, userInfo?.sessionId || "");
-      console.log(data);
-      setdeleteTrigger((prev) => !prev);
-    } catch (error) {
-      console.error("eror from delete schedule", error);
-    }
   };
 
   //-----------------------------------------------------------------------
@@ -162,7 +145,6 @@ export default function Main() {
           Nouveau Schedule
         </Button>
       </div>
-
       <Collapse in={Boolean(error)}>
         <Alert
           severity="error"
@@ -191,6 +173,8 @@ export default function Main() {
           searchTerm={searchTerm}
           onEdit={editExistingSchedule}
           onDelete={deleteSchedule}
+          setShowConfirmDelete={setShowConfirmDelete}
+          showConfirmDelete={showConfirmDelete}
           devices={devices}
           statusFilter={statusFilter}
           filterBy={filterBy}
@@ -208,13 +192,21 @@ export default function Main() {
           }}
         />
       </Grid>
-
+      <SnackBar
+        open={submissionFeedback.message !== ""}
+        onClose={() =>
+          setSubmissionFeedback({ type: "", message: "", code: "" })
+        }
+        message={submissionFeedback.message || ""}
+        type={submissionFeedback.type === "SUCCESS" ? "success" : "error"}
+      />
       {/* Modal create / Edit */}
       <ScheduleDialog
         playlists={playlists}
         mode={mode}
         devices={devices}
-        open={openCreate}
+        open={openCreate && step === 1}
+        openCreate={openCreate}
         onClose={() => {
           setOpenCreate(false);
           resetForm();
@@ -223,7 +215,6 @@ export default function Main() {
         setScheduleData={setScheduleData}
         onSubmit={() =>
           handleSubmit(() => {
-            resetForm();
             setOpenCreate(false);
           })
         }
@@ -231,7 +222,7 @@ export default function Main() {
         step={step}
         setStep={setStep}
         validationFeedBack={validationFeedBack}
-        feedBackFinal={feedBackFinal}
+        submissionFeedback={submissionFeedback}
         setValidationFeedBack={setValidationFeedBack}
         isSubmitting={isSubmitting}
       />

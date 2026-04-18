@@ -4,26 +4,26 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-import Slide from "@mui/material/Slide";
-import { forwardRef } from "react";
+
 
 interface Props {
   open: boolean;
   title?: string;
+  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }
-const Transition = forwardRef(function Transition(props: any, ref) {
-  return <Slide direction="up" ref={ref} {...props} timeout={250} />;
-});
-const ConfirmDeleteDialog: React.FC<Props> = ({
+
+const DeleteScheduleDialog: React.FC<Props> = ({
   open,
   title,
+  isLoading,
   onClose,
   onConfirm,
 }) => {
   return (
-    <Dialog open={open} onClose={onClose} TransitionComponent={Transition}>
+    <Dialog open={open} onClose={isLoading ? undefined : onClose}>
+      {" "}
       <DialogTitle>Confirmer la suppression</DialogTitle>
       <DialogContent>
         Êtes-vous sûr de vouloir supprimer le schedule <strong>{title}</strong>{" "}
@@ -31,12 +31,12 @@ const ConfirmDeleteDialog: React.FC<Props> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Annuler</Button>
-        <Button color="error" onClick={onConfirm}>
-          Supprimer
+        <Button color="error" onClick={onConfirm} disabled={isLoading}>
+          {isLoading ? "Suppression..." : "Supprimer"}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default ConfirmDeleteDialog;
+export default DeleteScheduleDialog;

@@ -6,6 +6,7 @@ import {
   validateScheduleAPI,
   createScheduleAPI,
   updateScheduleAPI,
+  deleteScheduleAPI,
 } from "./scheduleService";
 
 export function useScheduleForm(sessionId: string) {
@@ -21,11 +22,13 @@ export function useScheduleForm(sessionId: string) {
   );
 
   // feedBack hook for API add-schedule /edit -schedule
-  const [feedBackFinal, setFeedBackFinal] = useState<ValidationState>({
-    type: "",
-    message: "",
-    code: "",
-  });
+  const [submissionFeedback, setSubmissionFeedback] = useState<ValidationState>(
+    {
+      type: "",
+      message: "",
+      code: "",
+    },
+  );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createStartTime = () => {
@@ -58,7 +61,6 @@ export function useScheduleForm(sessionId: string) {
     },
     devices: [],
   });
-  const SUCCESS_DELAY = 1500;
   const resetForm = () => {
     setScheduleData({
       title: "",
@@ -83,12 +85,14 @@ export function useScheduleForm(sessionId: string) {
     setMode("create");
     resetFeedback();
   };
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
   useEffect(() => {
     if (step === 2 && validationFeedBack.type === "ERROR") {
       setValidationFeedBack({ type: "", message: "", code: "" });
     }
-    if (step == 3 && feedBackFinal.type === "ERROR") {
-      setFeedBackFinal({ type: "", message: "", code: "" });
+    if (step == 3 && submissionFeedback.type === "ERROR") {
+      setSubmissionFeedback({ type: "", message: "", code: "" });
     }
   }, [step]);
 
@@ -136,7 +140,7 @@ export function useScheduleForm(sessionId: string) {
     setIsSubmitting(true);
     const result = buildSchedulePayload(scheduleData, sessionId);
     if (result.errorMessage) {
-      setFeedBackFinal({
+      setSubmissionFeedback({
         code: "",
         type: "ERROR",
         message: result.errorMessage,
@@ -151,19 +155,15 @@ export function useScheduleForm(sessionId: string) {
           : await updateScheduleAPI(result.data);
       console.log("data from adding schedule", data);
       if (!data.success) {
-        setFeedBackFinal(data);
+        onClose?.();
+        setSubmissionFeedback(data);
         return;
       }
-      setFeedBackFinal(data);
-      setTimeout(() => {
-        resetFeedback();
-        onClose?.();
-        console.log("hello");
-      }, SUCCESS_DELAY);
+      onClose?.();
+      setSubmissionFeedback(data);
     } catch (error) {
       console.error("Add schedule error:", error);
-
-      setFeedBackFinal({
+      setSubmissionFeedback({
         type: "ERROR",
         message: "Erreur serveur.",
         code: "",
@@ -206,7 +206,31 @@ export function useScheduleForm(sessionId: string) {
 
   const resetFeedback = () => {
     setValidationFeedBack({ type: "", message: "", code: "" });
-    setFeedBackFinal({ type: "", message: "", code: "" });
+    setSubmissionFeedback({ type: "", message: "", code: "" });
+  };
+  //--------------------------------------------------
+  // DELETE SCHEDULE
+  //--------------------------------------------------
+  const deleteSchedule = async (id: number) => {
+    try {
+      if (!id) return;
+      const data = await deleteScheduleAPI(id, sessionId || "");
+      if (data.success) {
+        setSchedules((prev) =>
+          prev.filter((s: ISchedule) => s.scheduleId !== id),
+        );
+        setSubmissionFeedback(data);
+        return;
+      }
+      setSubmissionFeedback(data);
+    } catch (error) {
+      setSubmissionFeedback({
+        type: "ERROR",
+        message: "Erreur serveur.",
+        code: "",
+      });
+      console.error("eror from delete schedule", error);
+    }
   };
   return {
     scheduleData,
@@ -217,11 +241,18 @@ export function useScheduleForm(sessionId: string) {
     setMode,
     validationFeedBack,
     setValidationFeedBack,
-    feedBackFinal,
+    submissionFeedback,
+    setSubmissionFeedback,
     isSubmitting,
     validateSchedule,
     handleSubmit,
+    deleteSchedule,
     loadScheduleForEdit,
     resetForm,
+    showConfirmDelete,
+    setShowConfirmDelete,
   };
+}
+function setSchedules(arg0: (prev: any) => any) {
+  throw new Error("Function not implemented.");
 }

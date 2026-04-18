@@ -24,11 +24,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 export default function ScheduleReviewDialog({
   open,
+  onClose,
   onSubmit,
   scheduleData,
   step,
   setStep,
-  feedBackFinal,
+  submissionFeedback,
   validationFeedBack,
   isSubmitting,
   mode,
@@ -73,34 +74,12 @@ export default function ScheduleReviewDialog({
     }));
   };
   const isWarning = validationFeedBack?.type === "WARNING";
-  const isError = feedBackFinal?.type === "ERROR";
-  const isValid = feedBackFinal?.type === "SUCCESS";
+  const isError = submissionFeedback?.type === "ERROR";
+  const isValid = submissionFeedback?.type === "SUCCESS";
 
   return (
-    <Dialog
-      open={open && step === 3}
-      onClose={() => setStep(2)}
-      maxWidth="sm"
-      fullWidth
-    >
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogContent sx={{ p: 4 }}>
-        <Collapse in={isValid} timeout={300}>
-          <Box sx={{ mt: 1 }}>
-            <Alert severity="success">
-              <AlertTitle>Succès</AlertTitle>
-              {feedBackFinal?.message}
-            </Alert>
-          </Box>
-        </Collapse>
-        <Collapse in={isError} timeout={300}>
-          <Box sx={{ px: 1, mt: 1 }}>
-            <Alert severity="error">
-              <AlertTitle>Erreur</AlertTitle>
-              {feedBackFinal?.message}
-            </Alert>
-          </Box>
-        </Collapse>
-
         {/* ===== HEADER ===== */}
         <Box
           sx={{

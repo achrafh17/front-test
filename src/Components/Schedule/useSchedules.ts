@@ -5,14 +5,14 @@ import { ISchedule } from "../../types/api.types";
 export function useSchedules(
   sessionId: string,
   filterBy: string,
-  deps: any[] = [],
+  openCreate: boolean,
 ) {
   const [schedules, setSchedules] = useState<ISchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!sessionId) return;
+    let isMounted = true;
 
     const load = async () => {
       setIsLoading(true);
@@ -20,19 +20,26 @@ export function useSchedules(
 
       try {
         const data = await fetchSchedules(sessionId, filterBy);
-        if (data?.success) {
+        if (isMounted && data?.success) {
           setSchedules(data.result || []);
         }
-      } catch (error: any) {
-        console.error("useSchedules error:", error);
-        setError("Erreur Serveur");
+      } catch (error) {
+        if (isMounted) {
+          setError("Erreur Serveur");
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     load();
-  }, [sessionId, filterBy, ...deps]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sessionId, filterBy, openCreate]);
 
   return { schedules, isLoading, setSchedules, error };
 }

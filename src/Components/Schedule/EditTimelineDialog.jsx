@@ -27,6 +27,7 @@ import ScheduleReviewDialog from "./ScheduleReviewDialog";
 /* ===================================================== */
 export default function EditTimelineDialog({
   open,
+  openCreate,
   onClose,
   onSubmit,
   mode,
@@ -36,7 +37,7 @@ export default function EditTimelineDialog({
   step,
   setStep,
   validationFeedBack,
-  feedBackFinal,
+  submissionFeedback,
   setValidationFeedBack,
   isSubmitting,
 }) {
@@ -280,12 +281,13 @@ export default function EditTimelineDialog({
         </DialogActions>
       </Dialog>
       <ScheduleReviewDialog
-        open={step === 3}
+        open={openCreate && step === 3}
+        onClose={onClose}
         onSubmit={onSubmit}
         step={step}
         setStep={setStep}
         scheduleData={scheduleData}
-        feedBackFinal={feedBackFinal}
+        submissionFeedback={submissionFeedback}
         validationFeedBack={validationFeedBack}
         isSubmitting={isSubmitting}
         mode={mode}

@@ -57,7 +57,6 @@ export const buildSchedulePayload = (
     },
   };
 };
-
 export async function fetchSchedules(
   sessionId: string,
   filterBy: string,
@@ -109,9 +108,12 @@ export async function validateScheduleAPI(data: any) {
 
   try {
     result = await res.json();
-    console.log("here are the result", result);
   } catch {
     throw new Error("Réponse invalide du serveur");
+  }
+
+  if (!res.ok && !result) {
+    throw new Error("Erreur serveur critique");
   }
 
   return result;
@@ -141,7 +143,7 @@ export async function deleteScheduleAPI(id: number, sessionId: string) {
     `${BASE_URL}/delete-schedule?sessionId=${sessionId}`,
     {
       method: "DELETE",
-      headers: { "content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ scheduleId: id }),
     },
   );

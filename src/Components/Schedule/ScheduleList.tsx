@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Skeleton from "@mui/material/Skeleton";
 import { ISchedule } from "../../types/api.types";
-import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import ScheduleInfoDialog from "./ScheduleInfoDialog";
 import { Stack } from "@mui/material";
 import { IDevice } from "../../types/api.types";
 
 import ScheduleSections from "./ScheduleSections";
+import DeleteScheduleDialog from "./DeleteScheduleDialog";
 
 interface Props {
   isLoading: boolean;
@@ -20,6 +20,8 @@ interface Props {
   statusFilter: StatusFilter;
   filterBy: FilterBy;
   setFilterBy: (value: FilterBy) => void;
+  showConfirmDelete: boolean;
+  setShowConfirmDelete: (value: boolean) => void;
 }
 type StatusFilter = "active" | "daily" | "passed";
 type FilterBy =
@@ -39,14 +41,16 @@ const ScheduleList: React.FC<Props> = ({
   devices = [],
   filterBy,
   setFilterBy,
+  showConfirmDelete,
+  setShowConfirmDelete,
 }) => {
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ISchedule | null>(
     null,
   );
   const [showInfoSchedule, setShowInfoSchedule] = useState<ISchedule | null>(
     null,
   );
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteClick = (schedule: ISchedule) => {
     setSelectedSchedule(schedule);
@@ -102,18 +106,30 @@ const ScheduleList: React.FC<Props> = ({
           onEdit={onEdit}
         />
 
-        <ConfirmDeleteDialog
+        <DeleteScheduleDialog
           open={showConfirmDelete && !!selectedSchedule}
           title={selectedSchedule?.title}
+            isLoading={isDeleting}
+
           onClose={() => {
             setShowConfirmDelete(false);
             setSelectedSchedule(null);
           }}
-          onConfirm={() => {
-            if (selectedSchedule?.scheduleId)
-              onDelete(selectedSchedule.scheduleId);
-            setShowConfirmDelete(false);
-            setSelectedSchedule(null);
+          onConfirm={ () => {
+            if (!selectedSchedule?.scheduleId) return;
+
+            setIsDeleting(true);
+
+            try {
+               onDelete(selectedSchedule.scheduleId);
+
+              setShowConfirmDelete(false);
+              setSelectedSchedule(null);
+            } catch (error) {
+              console.error(error);
+            } finally {
+              setIsDeleting(false);
+            }
           }}
         />
         <ScheduleInfoDialog

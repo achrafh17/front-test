@@ -37,6 +37,7 @@ const Divider = styled("div")({
 export default function ScheduleDialog({
   open,
   onClose,
+  openCreate,
   mode,
   onSubmit,
   playlists,
@@ -48,7 +49,7 @@ export default function ScheduleDialog({
   setStep,
   validationFeedBack,
 
-  feedBackFinal,
+  submissionFeedback,
   setValidationFeedBack,
   isSubmitting,
 }) {
@@ -65,12 +66,7 @@ export default function ScheduleDialog({
 
   return (
     <>
-      <Dialog
-        open={open && step === 1}
-        onClose={onClose}
-        fullWidth
-        maxWidth="sm"
-      >
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
         <DialogTitle>
           {mode === "create"
             ? "Créer un Schedule"
@@ -307,7 +303,8 @@ export default function ScheduleDialog({
       </Dialog>
 
       <EditTimelineDialog
-        open={step === 2}
+        open={openCreate && step === 2}
+        openCreate={openCreate}
         onClose={onClose}
         mode={mode}
         onSubmit={onSubmit}
@@ -318,7 +315,7 @@ export default function ScheduleDialog({
         setStep={setStep}
         validationFeedBack={validationFeedBack}
         setValidationFeedBack={setValidationFeedBack}
-        feedBackFinal={feedBackFinal}
+        submissionFeedback={submissionFeedback}
         isSubmitting={isSubmitting}
       />
     </>
