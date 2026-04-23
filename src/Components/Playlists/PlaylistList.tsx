@@ -28,18 +28,27 @@ interface props {
   updateContentDuration: (
     newDuration: number,
     contentIdx: number,
-    playlistIndex: number
+    playlistIndex: number,
   ) => void;
-  setNewSortedContents: (sortedContents: PlaylistContent[], playlistIndex: number) => void;
-  addContentsToPlaylist: (newContents: (IContent & { linkDuration: number })[], playlistIndex: number) => void;
-  removeContentFromPlaylist: (contentIdx: number, playlistIndex: number) => void;
+  setNewSortedContents: (
+    sortedContents: PlaylistContent[],
+    playlistIndex: number,
+  ) => void;
+  addContentsToPlaylist: (
+    newContents: (IContent & { linkDuration: number })[],
+    playlistIndex: number,
+  ) => void;
+  removeContentFromPlaylist: (
+    contentIdx: number,
+    playlistIndex: number,
+  ) => void;
   addDevicesToPlaylist: (
     newDevices: PlaylistDevice[],
-    playlistIndex: number
+    playlistIndex: number,
   ) => void;
   handleDeletePlaylist: (playlistId: number) => void;
   handleDuplicatePlaylist: (playlistId: number) => void;
-  addPlaylist: () =>void;
+  addPlaylist: () => void;
 }
 
 const PlaylistList: React.FC<props> = ({
@@ -56,19 +65,21 @@ const PlaylistList: React.FC<props> = ({
   addDevicesToPlaylist,
   handleDeletePlaylist,
   handleDuplicatePlaylist,
-  addPlaylist
+  addPlaylist,
 }) => {
   const { setRsbVariant } = useRSB();
-  const {userInfo} = useAuth();
+  const { userInfo } = useAuth();
 
-  const setErrorMsg = useStore(state => state.setErrorMsg)
-  const [selectedIndexForScreenRSB, setSelectedIndexForScreenRSB] =
-    useState<number | null>(null);
-  const [selectedIndexForContentRSB, setSelectedIndexForContentRSB] =
-    useState<number | null>(null);
+  const setErrorMsg = useStore((state) => state.setErrorMsg);
+  const [selectedIndexForScreenRSB, setSelectedIndexForScreenRSB] = useState<
+    number | null
+  >(null);
+  const [selectedIndexForContentRSB, setSelectedIndexForContentRSB] = useState<
+    number | null
+  >(null);
 
   const handleAddContentPress = (playlistIndex: number) => {
-    if(userInfo?.privileges.playlists !== true) {
+    if (userInfo?.privileges.playlists !== true) {
       setErrorMsg("Vous n'avez pas les droits nécessaires");
       return;
     }
@@ -78,7 +89,9 @@ const PlaylistList: React.FC<props> = ({
       name: "PLAYLIST_ADD_CONTENT",
       renderComponent: () => (
         <PlaylistAddContentRSB
-          onNewContents={(newContents: (IContent & { linkDuration: number })[]) => {
+          onNewContents={(
+            newContents: (IContent & { linkDuration: number })[],
+          ) => {
             addContentsToPlaylist(newContents, playlistIndex);
           }}
         />
@@ -87,7 +100,7 @@ const PlaylistList: React.FC<props> = ({
   };
 
   const handleAddScreenPress = (playlistIndex: number) => {
-    if(userInfo?.privileges.devices !== true) {
+    if (userInfo?.privileges.devices !== true) {
       setErrorMsg("Vous n'avez pas les droits nécessaires");
       return;
     }
@@ -97,13 +110,9 @@ const PlaylistList: React.FC<props> = ({
       name: "PLAYLIST_ADD_SCREEN",
       renderComponent: () => (
         <PlaylistAddScreenRSB
-          playlistName={
-            playlists[playlistIndex].name
-          }
-          playlistId={playlists[playlistIndex].playlistId}
-          playlistDevices={
-            playlists[playlistIndex].devices
-          }
+          playlistName={playlists[playlistIndex].name}
+          playlist={playlists[playlistIndex]}
+          playlistDevices={playlists[playlistIndex].devices}
           onAddedDevices={(newDevices) => {
             addDevicesToPlaylist(newDevices, playlistIndex);
           }}
@@ -161,7 +170,11 @@ const PlaylistList: React.FC<props> = ({
           </>
         ) : (
           playlists.map((playlistInfo, idx) => {
-            if(!playlistInfo.name.toLowerCase().includes(searchTerm.toLowerCase())){
+            if (
+              !playlistInfo.name
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+            ) {
               return <div key={idx}></div>;
             }
             return (
@@ -174,8 +187,8 @@ const PlaylistList: React.FC<props> = ({
                   selectedIndexForContentRSB === idx
                     ? "content"
                     : selectedIndexForScreenRSB === idx
-                    ? "screen"
-                    : null
+                      ? "screen"
+                      : null
                 }
                 onPlaylistNameChange={(newName: string) => {
                   updatePlaylistName(newName, idx);
@@ -187,28 +200,23 @@ const PlaylistList: React.FC<props> = ({
                   handleAddScreenPress(idx);
                 }}
                 onSortContents={(sortedContents: PlaylistContent[]) => {
-                  setNewSortedContents(sortedContents, idx)
+                  setNewSortedContents(sortedContents, idx);
                 }}
                 onContentDurationChange={(newDuration, contentIdx) => {
-                  updateContentDuration(
-                    newDuration,
-                    contentIdx,
-                    idx
-                  );
+                  updateContentDuration(newDuration, contentIdx, idx);
                 }}
                 onDeleteContentPress={(contentIdx) => {
-                  removeContentFromPlaylist(
-                    contentIdx,
-                    idx
-                  );
+                  removeContentFromPlaylist(contentIdx, idx);
                 }}
                 onDeletePlaylist={() => {
-                  setSelectedIndexForContentRSB(null)
-                  setSelectedIndexForScreenRSB(null)
+                  setSelectedIndexForContentRSB(null);
+                  setSelectedIndexForScreenRSB(null);
                   setRsbVariant({
                     name: "PLAYLIST_DEFAULT",
-                    renderComponent: () => <PlaylistDefaultRSB addPlaylist={addPlaylist}/>
-                  })
+                    renderComponent: () => (
+                      <PlaylistDefaultRSB addPlaylist={addPlaylist} />
+                    ),
+                  });
                   handleDeletePlaylist(playlistInfo.playlistId);
                 }}
                 onDuplicatePlaylist={() => {

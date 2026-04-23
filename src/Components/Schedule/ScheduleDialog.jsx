@@ -37,7 +37,6 @@ const Divider = styled("div")({
 export default function ScheduleDialog({
   open,
   onClose,
-  openCreate,
   mode,
   onSubmit,
   playlists,
@@ -294,7 +293,7 @@ export default function ScheduleDialog({
               scheduleData.devices.length === 0
             }
             onClick={() => {
-              setStep(2);
+              setStep("timeline");
             }}
           >
             Suivant
@@ -303,8 +302,7 @@ export default function ScheduleDialog({
       </Dialog>
 
       <EditTimelineDialog
-        open={openCreate && step === 2}
-        openCreate={openCreate}
+        open={step === "timeline"}
         onClose={onClose}
         mode={mode}
         onSubmit={onSubmit}
@@ -317,6 +315,7 @@ export default function ScheduleDialog({
         setValidationFeedBack={setValidationFeedBack}
         submissionFeedback={submissionFeedback}
         isSubmitting={isSubmitting}
+        isFromPlaylist={false}
       />
     </>
   );

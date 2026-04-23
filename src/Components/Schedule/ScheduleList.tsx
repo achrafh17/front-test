@@ -13,6 +13,7 @@ interface Props {
   isLoading: boolean;
   sliderValue: number;
   schedules: ISchedule[];
+  setSchedules: (schedules: any) => void;
   searchTerm: string;
   onEdit: (schedule: ISchedule) => void;
   onDelete: (scheduleId: number) => void;
@@ -43,6 +44,7 @@ const ScheduleList: React.FC<Props> = ({
   setFilterBy,
   showConfirmDelete,
   setShowConfirmDelete,
+  setSchedules,
 }) => {
   const [selectedSchedule, setSelectedSchedule] = useState<ISchedule | null>(
     null,
@@ -109,20 +111,22 @@ const ScheduleList: React.FC<Props> = ({
         <DeleteScheduleDialog
           open={showConfirmDelete && !!selectedSchedule}
           title={selectedSchedule?.title}
-            isLoading={isDeleting}
-
+          isLoading={isDeleting}
           onClose={() => {
             setShowConfirmDelete(false);
             setSelectedSchedule(null);
           }}
-          onConfirm={ () => {
+          onConfirm={() => {
             if (!selectedSchedule?.scheduleId) return;
-
             setIsDeleting(true);
-
             try {
-               onDelete(selectedSchedule.scheduleId);
-
+              onDelete(selectedSchedule.scheduleId);
+              setSchedules((prev: any) =>
+                prev.filter(
+                  (s: ISchedule) =>
+                    s.scheduleId !== selectedSchedule?.scheduleId,
+                ),
+              );
               setShowConfirmDelete(false);
               setSelectedSchedule(null);
             } catch (error) {

@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { ValidationState, ISchedule } from "../../types/api.types";
+import {
+  ValidationState,
+  ISchedule,
+  IPlaylistInfo,
+} from "../../types/api.types";
 import {
   buildSchedulePayload,
   validateScheduleAPI,
@@ -8,11 +12,13 @@ import {
   updateScheduleAPI,
   deleteScheduleAPI,
 } from "./scheduleService";
+import Playlist from "../Playlists/Playlist";
 
 export function useScheduleForm(sessionId: string) {
   const [mode, setMode] = useState<"edit" | "create">("create");
-
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<"closed" | "info" | "timeline" | "review">(
+    "closed",
+  );
   const [validationFeedBack, setValidationFeedBack] = useState<ValidationState>(
     {
       type: "",
@@ -20,7 +26,6 @@ export function useScheduleForm(sessionId: string) {
       code: "",
     },
   );
-
   // feedBack hook for API add-schedule /edit -schedule
   const [submissionFeedback, setSubmissionFeedback] = useState<ValidationState>(
     {
@@ -31,14 +36,22 @@ export function useScheduleForm(sessionId: string) {
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const createStartTime = () => {
+  const createStartTime = ({ isFromPlaylist }: { isFromPlaylist: boolean }) => {
     const d = new Date();
+    if (isFromPlaylist) {
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }
     d.setHours(8, 0, 0, 0);
     return d;
   };
 
-  const createEndTime = () => {
+  const createEndTime = ({ isFromPlaylist }: { isFromPlaylist: boolean }) => {
     const d = new Date();
+    if (isFromPlaylist) {
+      d.setHours(23, 59, 0, 0);
+      return d;
+    }
     d.setHours(18, 0, 0, 0);
     return d;
   };
@@ -46,9 +59,9 @@ export function useScheduleForm(sessionId: string) {
     scheduleId: null,
     title: "",
     startDate: new Date(),
-    startTime: createStartTime(),
+    startTime: createStartTime({ isFromPlaylist: false }),
     endDate: new Date(),
-    endTime: createEndTime(),
+    endTime: createEndTime({ isFromPlaylist: false }),
     repeatType: "none",
     playlist: {
       contents: [],
@@ -76,22 +89,22 @@ export function useScheduleForm(sessionId: string) {
       devices: [],
       startDate: new Date(),
       endDate: new Date(),
-      startTime: createStartTime(),
-      endTime: createEndTime(),
+      startTime: createStartTime({ isFromPlaylist: false }),
+      endTime: createEndTime({ isFromPlaylist: false }),
       repeatType: "none",
       scheduleId: null,
     });
-    setStep(1);
+    setStep("closed");
     setMode("create");
-    resetFeedback();
+    resetFeedBack();
   };
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   useEffect(() => {
-    if (step === 2 && validationFeedBack.type === "ERROR") {
+    if (step === "timeline" && validationFeedBack.type === "ERROR") {
       setValidationFeedBack({ type: "", message: "", code: "" });
     }
-    if (step == 3 && submissionFeedback.type === "ERROR") {
+    if (step === "review" && submissionFeedback.type === "ERROR") {
       setSubmissionFeedback({ type: "", message: "", code: "" });
     }
   }, [step]);
@@ -100,10 +113,19 @@ export function useScheduleForm(sessionId: string) {
   // Validate Schedule
   //----------------------------------------------------------------
 
-  const validateSchedule = async () => {
-    resetFeedback();
+  const validateSchedule = async ({
+    fromPlaylist,
+  }: {
+    fromPlaylist: boolean;
+  }) => {
+    resetFeedBack();
     if (!sessionId) return;
-    const result = buildSchedulePayload(scheduleData, sessionId);
+    const result = buildSchedulePayload(
+      scheduleData,
+      sessionId,
+      mode,
+      fromPlaylist,
+    );
 
     if (result.errorMessage) {
       setValidationFeedBack({
@@ -122,7 +144,7 @@ export function useScheduleForm(sessionId: string) {
       if (data.type === "WARNING") {
         setValidationFeedBack(data);
       }
-      setStep(3);
+      setStep("review");
     } catch (error) {
       console.error("error from validate schedule", error);
       setValidationFeedBack({
@@ -136,9 +158,20 @@ export function useScheduleForm(sessionId: string) {
   //---------------------------------------------
   // create/update schedule
   //---------------------------------------------
-  const handleSubmit = async (onClose?: () => void) => {
+  const handleSubmit = async ({
+    fromPlaylist = false,
+    onSuccess,
+  }: {
+    fromPlaylist: boolean;
+    onSuccess?: () => void;
+  }) => {
     setIsSubmitting(true);
-    const result = buildSchedulePayload(scheduleData, sessionId);
+    const result = buildSchedulePayload(
+      scheduleData,
+      sessionId,
+      mode,
+      fromPlaylist,
+    );
     if (result.errorMessage) {
       setSubmissionFeedback({
         code: "",
@@ -155,11 +188,12 @@ export function useScheduleForm(sessionId: string) {
           : await updateScheduleAPI(result.data);
       console.log("data from adding schedule", data);
       if (!data.success) {
-        onClose?.();
+        onSuccess?.();
         setSubmissionFeedback(data);
         return;
       }
-      onClose?.();
+      onSuccess?.();
+      resetForm();
       setSubmissionFeedback(data);
     } catch (error) {
       console.error("Add schedule error:", error);
@@ -177,8 +211,7 @@ export function useScheduleForm(sessionId: string) {
   //-----------------------------------------------
   const loadScheduleForEdit = (schedule: ISchedule) => {
     setMode("edit");
-    setStep(1);
-    //in update we need to pass through content
+    setStep("info"); //in update we need to pass through content
     const playlist = {
       //@ts-ignore
       contents: schedule.playlist.contents.map((c) => c.content),
@@ -201,10 +234,10 @@ export function useScheduleForm(sessionId: string) {
       startTime: new Date(schedule.startDate),
       endTime: new Date(schedule.endDate),
     });
-    resetFeedback();
+    resetFeedBack();
   };
 
-  const resetFeedback = () => {
+  const resetFeedBack = () => {
     setValidationFeedBack({ type: "", message: "", code: "" });
     setSubmissionFeedback({ type: "", message: "", code: "" });
   };
@@ -216,9 +249,6 @@ export function useScheduleForm(sessionId: string) {
       if (!id) return;
       const data = await deleteScheduleAPI(id, sessionId || "");
       if (data.success) {
-        setSchedules((prev) =>
-          prev.filter((s: ISchedule) => s.scheduleId !== id),
-        );
         setSubmissionFeedback(data);
         return;
       }
@@ -232,6 +262,27 @@ export function useScheduleForm(sessionId: string) {
       console.error("eror from delete schedule", error);
     }
   };
+  const mapPlaylistToSchedule = (playlist: IPlaylistInfo) => {
+    return {
+      contents: playlist.contents,
+      playlistId: playlist.playlistId,
+      name: playlist.name,
+      totalDuration: playlist.totalDuration,
+      numberOfScreens: playlist.numberOfScreens,
+      numberOfWidgets: playlist.numberOfWidgets,
+      userId: playlist.userId,
+    };
+  };
+  const prepareScheduleFromPlaylist = (playlist: IPlaylistInfo) => {
+    setScheduleData((prev) => ({
+      ...prev,
+      startTime: createStartTime({ isFromPlaylist: true }),
+      endTime: createEndTime({ isFromPlaylist: true }),
+      repeatType: "daily",
+      playlist: mapPlaylistToSchedule(playlist),
+    }));
+  };
+
   return {
     scheduleData,
     setScheduleData,
@@ -249,10 +300,11 @@ export function useScheduleForm(sessionId: string) {
     deleteSchedule,
     loadScheduleForEdit,
     resetForm,
+    prepareScheduleFromPlaylist,
     showConfirmDelete,
     setShowConfirmDelete,
+    resetFeedBack,
+    createStartTime,
+    createEndTime,
   };
-}
-function setSchedules(arg0: (prev: any) => any) {
-  throw new Error("Function not implemented.");
 }

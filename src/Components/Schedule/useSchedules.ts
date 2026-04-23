@@ -1,29 +1,28 @@
 import { useState, useEffect } from "react";
 import { fetchSchedules } from "./scheduleService";
-import { ISchedule } from "../../types/api.types";
+import { ISchedule, ValidationState } from "../../types/api.types";
 
 export function useSchedules(
   sessionId: string,
   filterBy: string,
-  openCreate: boolean,
+  step: "closed" | "info" | "timeline" | "review",
 ) {
   const [schedules, setSchedules] = useState<ISchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
-
+    if (step !== "closed") return;
     const load = async () => {
       setIsLoading(true);
-      setError(null);
-
+      setError("");
       try {
         const data = await fetchSchedules(sessionId, filterBy);
         if (isMounted && data?.success) {
           setSchedules(data.result || []);
         }
-      } catch (error) {
+      } catch (status) {
         if (isMounted) {
           setError("Erreur Serveur");
         }
@@ -39,7 +38,7 @@ export function useSchedules(
     return () => {
       isMounted = false;
     };
-  }, [sessionId, filterBy, openCreate]);
+  }, [sessionId, filterBy, step]);
 
-  return { schedules, isLoading, setSchedules, error };
+  return { schedules, isLoading, setSchedules, error, setError };
 }

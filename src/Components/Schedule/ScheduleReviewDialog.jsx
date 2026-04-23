@@ -458,7 +458,7 @@ export default function ScheduleReviewDialog({
       <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button
           onClick={() => {
-            setStep(2);
+            setStep("timeline");
           }}
         >
           Retour

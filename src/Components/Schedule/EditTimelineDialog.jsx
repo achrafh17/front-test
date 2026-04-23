@@ -13,7 +13,7 @@ import {
   MenuItem,
   Divider,
 } from "@mui/material";
-import { IconButton } from "@mui/material";
+import { IconButton, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -27,7 +27,6 @@ import ScheduleReviewDialog from "./ScheduleReviewDialog";
 /* ===================================================== */
 export default function EditTimelineDialog({
   open,
-  openCreate,
   onClose,
   onSubmit,
   mode,
@@ -40,6 +39,7 @@ export default function EditTimelineDialog({
   submissionFeedback,
   setValidationFeedBack,
   isSubmitting,
+  isFromPlaylist,
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -103,6 +103,30 @@ export default function EditTimelineDialog({
           onClose={() => setValidationFeedBack({})}
         />
         <DialogContent sx={{ px: 3, overflow: "visible" }}>
+          {isFromPlaylist && (
+            <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+              {/* <FormLabel sx={{ mb: 1 }}>
+                <LabelWithIcon
+                  // icon={CalendarMonthIcon}
+                  text="Titre du calendrier"
+                  required
+                />
+              </FormLabel> */}
+
+              <TextField
+                placeholder="Ex: Playlist matin magasin"
+                label="Titre du calendrier"
+                value={scheduleData.title}
+                onChange={(e) =>
+                  setScheduleData((prev) => ({
+                    ...prev,
+                    title: e.target.value,
+                  }))
+                }
+                size="small"
+              />
+            </FormControl>
+          )}
           <FormControl fullWidth size="small">
             <FormLabel sx={{ mb: 1 }}>
               <LabelWithIcon icon={RepeatIcon} text="Répétition" />
@@ -116,10 +140,6 @@ export default function EditTimelineDialog({
               <MenuItem value="daily">Quotidienne</MenuItem>
             </Select>
           </FormControl>
-
-          {scheduleData.repeatType === "daily" && (
-            <Text mt={2}>📌 Tous les jours</Text>
-          )}
 
           <Text size="xs" color="dimmed" mt={1}>
             <span style={{ color: "red" }}>*</span> Obligatoire
@@ -272,8 +292,17 @@ export default function EditTimelineDialog({
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button variant="outlined" onClick={() => setStep(1)}>
-            RETOUR
+          <Button
+            variant="outlined"
+            onClick={() => {
+              if (isFromPlaylist) {
+                onClose();
+              } else {
+                setStep("info");
+              }
+            }}
+          >
+            {isFromPlaylist ? "ANNULER" : "RETOUR"}
           </Button>
           <Button variant="contained" onClick={onValidate}>
             VALIDER
@@ -281,7 +310,7 @@ export default function EditTimelineDialog({
         </DialogActions>
       </Dialog>
       <ScheduleReviewDialog
-        open={openCreate && step === 3}
+        open={step === "review"}
         onClose={onClose}
         onSubmit={onSubmit}
         step={step}

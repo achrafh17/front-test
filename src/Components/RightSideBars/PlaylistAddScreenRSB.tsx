@@ -2,42 +2,50 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-import { PlaylistDevice, IDevice } from "../../types/api.types";
+import { PlaylistDevice, IDevice, IPlaylistInfo } from "../../types/api.types";
 import CircularProgress from "@mui/material/CircularProgress";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import CancelOutlinedIcon from "@mui/icons-material/CancelOutlined";
-import {
-  InputLabel,
-  FormControl,
-  Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  Stack,
-} from "@mui/material";
 import EditTimelineDialog from "../Schedule/EditTimelineDialog";
 import DeviceList from "./DeviceList";
 import Collapse from "@mui/material/Collapse";
+import { useScheduleForm } from "../Schedule/useScheduleForm";
+import { SnackBar } from "../Schedule/SnackBar";
+import { mapPlaylistToSchedule } from "../Schedule/schedule.utilis";
+import { create } from "@mui/material/styles/createTransitions";
 
 interface props {
   playlistName: string;
-  playlistId: number;
   playlistDevices: PlaylistDevice[];
   onAddedDevices: (addedDevices: PlaylistDevice[]) => void;
+  playlist: IPlaylistInfo;
 }
 
 const PlaylistAddScreen: React.FC<props> = ({
   playlistName,
-  playlistId,
+  playlist,
   playlistDevices,
   onAddedDevices,
 }) => {
   const { userInfo } = useAuth();
-  const navigate = useNavigate();
+  const {
+    scheduleData,
+    setScheduleData,
+    step,
+    setStep,
+    mode,
+    validationFeedBack,
+    setValidationFeedBack,
+    submissionFeedback,
+    isSubmitting,
+    validateSchedule,
+    handleSubmit,
+    resetForm,
+    prepareScheduleFromPlaylist,
+    resetFeedBack,
+  } = useScheduleForm(userInfo?.sessionId || "");
   const [searchValue, setSearchValue] = useState("");
   const [singleDevicesExpanded, setSingleDevicesExpanded] = useState(false);
   const [groupDevicesExpanded, setGroupDevicesExpanded] = useState(false);
@@ -48,7 +56,6 @@ const PlaylistAddScreen: React.FC<props> = ({
     singles: [],
     groups: [],
   });
-  const [selectedDeviceIds, setSelectedDeviceIds] = useState<number[]>([]);
   const [devices, setDevices] = useState<{
     singles: IDevice[];
     groups: IDevice[];
@@ -56,7 +63,6 @@ const PlaylistAddScreen: React.FC<props> = ({
     singles: [],
     groups: [],
   });
-  const [open, setOpen] = useState(false);
   const [numberOfDevicesPerPlaylist, setNumberOfDevicesPerPlaylist] = useState<
     Record<number, number>
   >({});
@@ -109,72 +115,80 @@ const PlaylistAddScreen: React.FC<props> = ({
     });
   }, [searchValue, devices]);
 
-  const handleToggleDevice = (id: number) => {
-    setSelectedDeviceIds((prev) =>
-      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
-    );
-  };
-
-  const onSave = async (timeStart: string, timeEnd: string) => {
-    if (selectedDeviceIds?.length === 0) return;
-    setIsLoading(true);
-    var payload = {
-      sessionId: userInfo?.sessionId,
-      deviceId: selectedDeviceIds,
-      playlistId,
-      timeEnd,
-      timeStart,
-    };
-
-    try {
-      var res = await fetch(
-        "https://www.powersmartscreen.com/link-playlist-device",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify(payload),
-        },
+  const handleToggleDevice = (dev: IDevice) => {
+    setScheduleData((prev) => {
+      const exists = prev.devices.some(
+        (device) => device.deviceId === dev.deviceId,
       );
-
-      var resJson = await res.json();
-      if (!resJson.success) {
-        setIsLoading(false);
-        setSuccess(false);
-        setTimeout(() => {
-          setSuccess(null);
-        }, 700);
-      } else {
-        var newDevices = resJson.result as PlaylistDevice[];
-        onAddedDevices(newDevices);
-        setNumberOfDevicesPerPlaylist((old) => {
-          var newData = { ...old };
-          newDevices.forEach((device) => {
-            if (newData.hasOwnProperty(device.deviceId)) {
-              newData[device.deviceId] = newData[device.deviceId] + 1;
-            } else {
-              newData[device.deviceId] = 1;
-            }
-          });
-          return newData;
-        });
-        setIsLoading(false);
-        setSuccess(true);
-        setTimeout(() => {
-          setSuccess(null);
-          setSelectedDeviceIds([]);
-        }, 700);
-      }
-    } catch (e) {
-      setIsLoading(false);
-      setSuccess(false);
-      setTimeout(() => {
-        setSuccess(null);
-      }, 700);
-    }
+      return {
+        ...prev,
+        devices: exists
+          ? prev.devices.filter((device) => device.deviceId !== dev.deviceId)
+          : [...prev.devices, dev],
+      };
+    });
   };
+
+  // const onSave = async (timeStart: string, timeEnd: string) => {
+  //   if (scheduleData.devices?.length === 0) return;
+  //   setIsLoading(true);
+  //   var payload = {
+  //     sessionId: userInfo?.sessionId,
+  //     devices: scheduleData.devices,
+  //     playlistId,
+  //     timeEnd,
+  //     timeStart,
+  //   };
+
+  //   try {
+  //     var res = await fetch(
+  //       "https://www.powersmartscreen.com/link-playlist-device",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Accept: "application/json",
+  //         },
+  //         body: JSON.stringify(payload),
+  //       },
+  //     );
+
+  //     var resJson = await res.json();
+  //     if (!resJson.success) {
+  //       setIsLoading(false);
+  //       setSuccess(false);
+  //       setTimeout(() => {
+  //         setSuccess(null);
+  //       }, 700);
+  //     } else {
+  //       var newDevices = resJson.result as PlaylistDevice[];
+  //       onAddedDevices(newDevices);
+  //       setNumberOfDevicesPerPlaylist((old) => {
+  //         var newData = { ...old };
+  //         newDevices.forEach((device) => {
+  //           if (newData.hasOwnProperty(device.deviceId)) {
+  //             newData[device.deviceId] = newData[device.deviceId] + 1;
+  //           } else {
+  //             newData[device.deviceId] = 1;
+  //           }
+  //         });
+  //         return newData;
+  //       });
+  //       setIsLoading(false);
+  //       setSuccess(true);
+  //       setTimeout(() => {
+  //         setSuccess(null);
+  //         setScheduleData((prev) => ({ ...prev, devices: [] }));
+  //       }, 700);
+  //     }
+  //   } catch (e) {
+  //     setIsLoading(false);
+  //     setSuccess(false);
+  //     setTimeout(() => {
+  //       setSuccess(null);
+  //     }, 700);
+  //   }
+  // };
 
   return (
     <Box
@@ -300,8 +314,8 @@ const PlaylistAddScreen: React.FC<props> = ({
                 <DeviceList
                   title="Ecrans"
                   devices={searchedDevices.singles}
-                  selectedDeviceIds={selectedDeviceIds}
                   handleToggleDevice={handleToggleDevice}
+                  scheduleData={scheduleData}
                 />
               </Box>
             </Collapse>
@@ -373,8 +387,8 @@ const PlaylistAddScreen: React.FC<props> = ({
                 <DeviceList
                   title="Groupes"
                   devices={searchedDevices.groups}
-                  selectedDeviceIds={selectedDeviceIds}
                   handleToggleDevice={handleToggleDevice}
+                  scheduleData={scheduleData}
                 />
               </Box>
             </Collapse>
@@ -403,27 +417,53 @@ const PlaylistAddScreen: React.FC<props> = ({
             <Button
               variant="contained"
               fullWidth
-              onClick={() => setOpen(true)}
-              disabled={selectedDeviceIds.length === 0}
+              onClick={() => {
+                prepareScheduleFromPlaylist(playlist);
+                setStep("timeline");
+              }}
+              disabled={scheduleData.devices.length === 0 || isSubmitting}
             >
               Ajouter
             </Button>
           )}
         </Box>
       </Box>
+
       <EditTimelineDialog
-        open={open}
+        open={step === "timeline"}
         onClose={() => {
-          setOpen(false);
+          setStep("closed");
           setSingleDevicesExpanded(false);
-          setSelectedDeviceIds([]);
+          resetForm();
         }}
-        onSave={onSave}
-        addscheduleByPlaylistOrDevice={true}
-        title={""}
-        selectedDevices={selectedDeviceIds}
-        playlistId={playlistId}
-        editSchedule={null}
+        mode={mode}
+        onSubmit={() =>
+          handleSubmit({
+            fromPlaylist: true,
+            onSuccess: () => {
+              setStep("closed");
+            },
+          })
+        }
+        onValidate={() => {
+          validateSchedule({ fromPlaylist: true });
+        }}
+        scheduleData={scheduleData}
+        setScheduleData={setScheduleData}
+        step={step}
+        setStep={setStep}
+        validationFeedBack={validationFeedBack}
+        setValidationFeedBack={setValidationFeedBack}
+        submissionFeedback={submissionFeedback}
+        isSubmitting={isSubmitting}
+        isFromPlaylist={true}
+      />
+
+      <SnackBar
+        open={!!submissionFeedback.message}
+        onClose={() => resetFeedBack()}
+        message={submissionFeedback.message || ""}
+        type={submissionFeedback.type === "SUCCESS" ? "success" : "error"}
       />
     </Box>
   );

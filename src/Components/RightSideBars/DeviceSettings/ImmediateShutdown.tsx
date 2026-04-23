@@ -12,9 +12,8 @@ import {
 } from "@mui/material";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
 import { useEffect, useState } from "react";
-import { Transition } from "../../../utils/schedule.utilis";
-import { IDevice } from "../../../types/api.types";
-import { ISchedule } from "../../Schedule/Main";
+import { IDevice, ISchedule } from "../../../types/api.types";
+import { Transition } from "../../Schedule/schedule.utilis";
 interface Props {
   deviceInfo: IDevice;
   sessionId: string | null;
@@ -113,7 +112,7 @@ export default function ImmediateShutdown({
   };
   return (
     <Box sx={{ width: "100%" }}>
-      <Box fullWidth sx={{ mb: 2 }}>
+      <Box sx={{ mb: 2 }}>
         <Button
           fullWidth
           variant="outlined"

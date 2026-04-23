@@ -12,44 +12,19 @@ import useAuth from "../../hooks/useAuth";
 import useRSB from "../../hooks/useRSB";
 import useStore from "../../store/store";
 
-import { Grid, IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Grid } from "@mui/material";
 import { Select, MenuItem, FormControl } from "@mui/material";
 import { ISchedule } from "../../types/api.types";
-import Alert from "@mui/material/Alert";
-import Collapse from "@mui/material/Collapse";
+
 import ScheduleDialog from "./ScheduleDialog";
 import { useSchedules } from "./useSchedules";
 import { usePlaylists } from "./usePlaylists";
 import { useDevices } from "./useDevices";
 import { useScheduleForm } from "./useScheduleForm";
-import { SnackBar } from "./snackBar";
+import { SnackBar } from "./SnackBar";
 
 export default function Main() {
   const { userInfo } = useAuth();
-  const [openCreate, setOpenCreate] = useState(false);
-  const setErrorMsg = useStore((state) => state.setErrorMsg);
-  const [sliderMax, sliderValue, setSliderValue] = useSliderValue();
-  const [searchTerm, setSearchTerm] = useState("");
-  //a variable to refresh the schedules list after deleted schedule
-  const [statusFilter, setStatusFilter] = useState<
-    "active" | "daily" | "passed"
-  >("active");
-  const [filterBy, setFilterBy] = useState<
-    | "name"
-    | "startDateAsc"
-    | "startDateDesc"
-    | "createdDateAsc"
-    | "createdDateDesc"
-  >("startDateAsc");
-  const { schedules, setSchedules, isLoading, error } = useSchedules(
-    userInfo?.sessionId || "",
-    filterBy,
-    openCreate,
-  );
-  const { playlists } = usePlaylists(userInfo?.sessionId || "");
-  const { devices } = useDevices(userInfo?.sessionId || "");
-  const { setRsbVariant } = useRSB();
   const {
     scheduleData,
     setScheduleData,
@@ -67,9 +42,32 @@ export default function Main() {
     deleteSchedule,
     loadScheduleForEdit,
     resetForm,
+    resetFeedBack,
     showConfirmDelete,
     setShowConfirmDelete,
   } = useScheduleForm(userInfo?.sessionId || "");
+  const setErrorMsg = useStore((state) => state.setErrorMsg);
+  const [sliderMax, sliderValue, setSliderValue] = useSliderValue();
+  const [searchTerm, setSearchTerm] = useState("");
+  //a variable to refresh the schedules list after deleted schedule
+  const [statusFilter, setStatusFilter] = useState<
+    "active" | "daily" | "passed"
+  >("active");
+  const [filterBy, setFilterBy] = useState<
+    | "name"
+    | "startDateAsc"
+    | "startDateDesc"
+    | "createdDateAsc"
+    | "createdDateDesc"
+  >("startDateAsc");
+  const { schedules, setSchedules, isLoading, error, setError } = useSchedules(
+    userInfo?.sessionId || "",
+    filterBy,
+    step,
+  );
+  const { playlists } = usePlaylists(userInfo?.sessionId || "");
+  const { devices } = useDevices(userInfo?.sessionId || "");
+  const { setRsbVariant } = useRSB();
 
   //-----------------------------------------------------------------------
   // launch create schedule
@@ -79,7 +77,7 @@ export default function Main() {
     setMode("create");
     if (!userInfo?.privileges.contents)
       return setErrorMsg("Vous n'avez pas les droits nécessaires");
-    setOpenCreate(true);
+    setStep("info");
   }, [userInfo?.privileges.contents, setErrorMsg]);
 
   //-----------------------------------------------------------------------
@@ -88,7 +86,7 @@ export default function Main() {
   const editExistingSchedule = async (schedule: ISchedule) => {
     resetForm();
     loadScheduleForEdit(schedule);
-    setOpenCreate(true);
+    setStep("info");
   };
 
   //-----------------------------------------------------------------------
@@ -145,19 +143,13 @@ export default function Main() {
           Nouveau Schedule
         </Button>
       </div>
-      <Collapse in={Boolean(error)}>
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          action={
-            <IconButton size="small" onClick={() => window.location.reload()}>
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          }
-        >
-          {error}
-        </Alert>
-      </Collapse>
+
+      <SnackBar
+        open={error !== ""}
+        onClose={() => setError("")}
+        message={error || ""}
+        type={"error"}
+      />
       <Grid
         sx={{
           ml: 0,
@@ -168,6 +160,7 @@ export default function Main() {
       >
         <ScheduleList
           schedules={schedules}
+          setSchedules={setSchedules}
           isLoading={isLoading}
           sliderValue={sliderValue}
           searchTerm={searchTerm}
@@ -194,9 +187,7 @@ export default function Main() {
       </Grid>
       <SnackBar
         open={submissionFeedback.message !== ""}
-        onClose={() =>
-          setSubmissionFeedback({ type: "", message: "", code: "" })
-        }
+        onClose={() => resetFeedBack()}
         message={submissionFeedback.message || ""}
         type={submissionFeedback.type === "SUCCESS" ? "success" : "error"}
       />
@@ -205,20 +196,24 @@ export default function Main() {
         playlists={playlists}
         mode={mode}
         devices={devices}
-        open={openCreate && step === 1}
-        openCreate={openCreate}
+        open={step === "info"}
         onClose={() => {
-          setOpenCreate(false);
+          setStep("closed");
           resetForm();
         }}
         scheduleData={scheduleData}
         setScheduleData={setScheduleData}
         onSubmit={() =>
-          handleSubmit(() => {
-            setOpenCreate(false);
+          handleSubmit({
+            fromPlaylist: false,
+            onSuccess: () => {
+              setStep("closed");
+            },
           })
         }
-        onValidate={validateSchedule}
+        onValidate={() => {
+          validateSchedule({ fromPlaylist: false });
+        }}
         step={step}
         setStep={setStep}
         validationFeedBack={validationFeedBack}

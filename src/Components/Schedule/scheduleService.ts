@@ -1,3 +1,4 @@
+import { modalClasses } from "@mui/material";
 import { ISchedule } from "../../types/api.types";
 import { mergeDateAndTime, validateScheduleInput } from "./schedule.utilis";
 
@@ -11,14 +12,19 @@ type ApiResponse<T> = {
 export const buildSchedulePayload = (
   schedule: ISchedule,
   sessionId: string,
+  mode: string,
+  isFromPlaylist: boolean,
 ) => {
+  const repeatType= schedule.repeatType==="none"?"none":"daily"
   const errorMessage = validateScheduleInput({
     startDate: schedule.startDate,
     endDate: schedule.endDate,
     startTime: schedule.startTime,
     endTime: schedule.endTime,
     devices: schedule.devices,
-    repeatType: schedule.repeatType,
+    repeatType: repeatType,
+    title: schedule.title,
+    isFromPlaylist: isFromPlaylist,
   });
 
   if (errorMessage) {
@@ -28,13 +34,13 @@ export const buildSchedulePayload = (
   const start = mergeDateAndTime(
     schedule.startDate,
     schedule.startTime,
-    schedule.repeatType,
+    repeatType,
   );
 
   const end = mergeDateAndTime(
     schedule.endDate,
     schedule.endTime,
-    schedule.repeatType,
+    repeatType,
   );
 
   if (!start || !end) {
@@ -52,7 +58,8 @@ export const buildSchedulePayload = (
       repeatType: schedule.repeatType,
       isActive: true,
       sessionId: sessionId,
-      //edit mode
+      modalClasses,
+      mode: mode,
       scheduleId: schedule.scheduleId,
     },
   };
@@ -88,10 +95,9 @@ export async function createScheduleAPI(data: any) {
 
   const result = await res.json();
 
-  if (!res.ok) {
-    throw new Error(result.message || "Erreur serveur");
+  if (!res.ok && !result) {
+    throw new Error("Erreur serveur critique");
   }
-
   return result;
 }
 
@@ -105,16 +111,11 @@ export async function validateScheduleAPI(data: any) {
   });
 
   let result;
+  result = await res.json();
 
-  try {
-    result = await res.json();
-  } catch {
-    throw new Error("Réponse invalide du serveur");
-  }
-
-  if (!res.ok && !result) {
-    throw new Error("Erreur serveur critique");
-  }
+  // if (!res.ok && !result) {
+  //   throw new Error("Erreur serveur critique");
+  // }
 
   return result;
 }

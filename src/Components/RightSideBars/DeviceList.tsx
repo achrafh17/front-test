@@ -1,30 +1,32 @@
 import { Box, Typography, Stack, Checkbox } from "@mui/material";
-import { IDevice } from "../../types/api.types";
+import { IDevice, ISchedule } from "../../types/api.types";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 interface Props {
   title: string;
   devices: IDevice[];
-  selectedDeviceIds: number[];
-  handleToggleDevice: (a: number) => void;
+  handleToggleDevice: (device: IDevice) => void;
+  scheduleData: ISchedule;
 }
 export default function DeviceList({
   title,
   devices,
-  selectedDeviceIds,
   handleToggleDevice,
+  scheduleData,
 }: Props) {
   return (
     <Box sx={{ mt: 2 }}>
       <Stack spacing={1}>
         {devices.map((d) => {
-          const selected = selectedDeviceIds.includes(d.deviceId);
+          const selected = scheduleData.devices.some(
+            (device) => device.deviceId === d.deviceId,
+          );
 
           return (
             <Box
               key={d.deviceId}
-              onClick={() => handleToggleDevice(d.deviceId)}
+              onClick={() => handleToggleDevice(d)}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -46,7 +48,7 @@ export default function DeviceList({
                 checked={selected}
                 onClick={(e) => e.stopPropagation()}
                 onChange={() => {
-                  handleToggleDevice(d.deviceId);
+                  handleToggleDevice(d);
                 }}
               />
             </Box>
