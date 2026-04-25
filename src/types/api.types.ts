@@ -126,6 +126,7 @@ export interface ISlide {
 interface IPlaylistWithContenets extends IPlaylist {
   contents: IContent[];
 }
+
 export interface ISchedule {
   scheduleId: number | null;
   title: string;
@@ -133,9 +134,9 @@ export interface ISchedule {
   startTime: Date;
   endDate: Date;
   endTime: Date;
-  devices: IDevice[];
+  devices: ScheduleDevice[];
   repeatType: string;
-  playlist: IPlaylistWithContenets;
+  playlist: SchedulePlaylist;
 }
 
 // ------------------- END OF PRISMA MODEL TYPES -------------------
@@ -179,6 +180,18 @@ export type PlaylistContent = IContent & {
 export type IPlaylistInfo = IPlaylist & {
   devices: PlaylistDevice[];
   contents: PlaylistContent[];
+};
+export type ScheduleDevice = {
+  id: number;
+  scheduleId: number;
+  deviceId: number;
+  device: IDevice;
+};
+export type SchedulePlaylist = IPlaylist & {
+  contents: ScheduleContent[];
+};
+export type ScheduleContent = IContent2Playlist & {
+  content: IContent;
 };
 
 export interface ILayoutInfo {
@@ -258,7 +271,7 @@ export interface IFormattedTwitterApiResponse {
 }
 export interface ValidationState {
   message?: string;
-  type?: "ERROR" | "SUCCESS" | "WARNING" |"";
+  type?: "ERROR" | "SUCCESS" | "WARNING" | "";
   success?: boolean;
   code?: string;
 }

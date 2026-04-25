@@ -139,7 +139,6 @@ const ScheduleList: React.FC<Props> = ({
         <ScheduleInfoDialog
           open={!!showInfoSchedule}
           schedule={showInfoSchedule}
-          devices={devices}
           onClose={() => {
             setShowInfoSchedule(null);
           }}

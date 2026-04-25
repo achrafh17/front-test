@@ -87,3 +87,16 @@ export const mapPlaylistToSchedule = (playlist: IPlaylistInfo) => {
 export const Transition = forwardRef(function Transition(props: any, ref) {
   return <Slide direction="up" ref={ref} {...props} timeout={250} />;
 });
+export const formatTime = (d: Date) =>
+  d
+    ? new Date(d).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "--:--";
+
+export const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "--");
+export const toMinute = (d: Date) => {
+  const Minutes = new Date(d).getHours() * 60 + new Date(d).getMinutes();
+  return Minutes
+};

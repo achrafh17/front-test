@@ -17,7 +17,7 @@ import PlaylistPlayIcon from "@mui/icons-material/PlaylistPlay";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import Alert from "@mui/material/Alert";
 import AlertTitle from "@mui/material/AlertTitle";
-import { mergeDateAndTime } from "./schedule.utilis";
+import { mergeDateAndTime, formatDate, formatTime } from "./schedule.utilis";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import ContentCutIcon from "@mui/icons-material/ContentCut";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -55,16 +55,6 @@ export default function ScheduleReviewDialog({
     scheduleData.endTime,
     scheduleData.repeatType,
   ]);
-
-  const formatTime = (d) =>
-    d
-      ? new Date(d).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "--:--";
-
-  const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "--");
 
   const [showChildrens, setShowChildrens] = useState({});
   const toggleChildren = (id) => {
